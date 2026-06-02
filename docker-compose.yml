@@ -1,0 +1,29 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: als-floci
+    ports:
+      - "4567:4566"  # S3 API
+      - "5434:5432"  # PostgreSQL
+      - "6380:6379"  # Valkey (ElastiCache)
+    environment:
+      SERVICES: s3,rds,elasticache,cloudwatch,logs
+      ELASTICACHE_REDIS_ENGINE: valkey
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack_data
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - floci_data:/tmp/localstack_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  floci_data:
+    driver: local
