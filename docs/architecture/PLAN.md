@@ -78,10 +78,10 @@ The platform analyzes lesson content, identifies prerequisite knowledge, evaluat
 * Pydantic
 * PydanticAI
 * **LLM Abstraction Layer**
-  - Groq API (primary)
-  - OpenAI (alternative)
-  - Anthropic (alternative)
-  - Mock (testing)
+  * Groq API (primary)
+  * OpenAI (alternative)
+  * Anthropic (alternative)
+  * Mock (testing)
 
 ## Frontend
 
@@ -161,17 +161,20 @@ END
 Provides provider independence through dependency injection:
 
 **Architecture:**
+
 ```
 Services → ILLMProvider (interface) → GroqProvider | OpenAIProvider | MockProvider
 ```
 
 **Benefits:**
-- Swap providers via `LLM_PROVIDER=groq|openai|anthropic|mock`
-- Easy testing with MockProvider
-- Built-in resilience (retry, timeout, circuit breaker, fallback)
-- OpenTelemetry tracing integrated
+
+* Swap providers via `LLM_PROVIDER=groq|openai|anthropic|mock`
+* Easy testing with MockProvider
+* Built-in resilience (retry, timeout, circuit breaker, fallback)
+* OpenTelemetry tracing integrated
 
 **Configuration:**
+
 ```python
 # backend/llm/config.py
 class LLMConfig(BaseSettings):
@@ -184,6 +187,7 @@ class LLMConfig(BaseSettings):
 ```
 
 **Usage:**
+
 ```python
 class PrerequisiteService:
     def __init__(
