@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import health
+from backend.api.routes import health, pdf
 from backend.config import get_settings
 from backend.infrastructure.telemetry.logger import setup_logger
 from backend.infrastructure.telemetry.tracer import setup_telemetry
@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
 
     # Incluir Rotas
     app.include_router(health.router)
+    app.include_router(pdf.router, prefix="/api/v1")
 
     @app.get("/")
     async def root():
