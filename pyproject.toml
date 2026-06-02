@@ -46,6 +46,8 @@ pytest-asyncio = "^0.24.0"
 pytest-cov = "^6.0.0"
 ruff = "^0.8.0"
 mypy = "^1.13.0"
+pre-commit = "^4.0.0"
+bandit = "^1.7.10"
 
 [tool.poetry.group.test.dependencies]
 pytest-mock = "^3.14.0"
@@ -76,6 +78,7 @@ select = [
 ignore = [
     "ARG001",  # Unused function argument (for dependency injection)
     "ARG002",  # Unused method argument (for dependency injection)
+    "B008",    # Do not perform function call `Depends` in argument defaults
 ]
 
 [tool.ruff.lint.isort]
@@ -94,6 +97,16 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = [
+    "asyncpg.*",
+    "boto3.*",
+    "botocore.*",
+    "opentelemetry.*",
+    "loguru.*",
+]
+ignore_missing_imports = true
+
 [tool.coverage.run]
 source = ["backend"]
 omit = ["*/tests/*", "*/test_*.py"]
@@ -106,3 +119,8 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:",
 ]
+
+# Bandit configuration (security linting)
+[tool.bandit]
+exclude_dirs = [".git", "__pycache__", "htmlcov", ".pytest_cache"]
+skips = ["B101", "B104"]  # B101: assert_used, B104: hardcoded_bind_all_interfaces (0.0.0.0 is intentional for dev)

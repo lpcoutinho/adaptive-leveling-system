@@ -104,6 +104,9 @@ dmypy.json
 # Ruff
 .ruff_cache/
 
+# Pre-commit
+.pre-commit-cache/
+
 # Pyre
 .pyre/
 
