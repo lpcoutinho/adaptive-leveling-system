@@ -1,21 +1,19 @@
 """Aplicação principal do frontend usando Streamlit."""
+
 import streamlit as st
-from frontend.streamlit.config import get_frontend_settings
+
+from frontend.app.config import get_frontend_settings
 
 settings = get_frontend_settings()
 
 
 def main():
     """Ponto de entrada do frontend."""
-    st.set_page_config(
-        page_title=settings.app_title,
-        page_icon="🎓",
-        layout="wide"
-    )
+    st.set_page_config(page_title=settings.app_title, page_icon="🎓", layout="wide")
 
     st.sidebar.title("Navegação")
     st.sidebar.info("🎓 Adaptive Leveling System")
-    
+
     st.title("🎓 Adaptive Leveling System")
     st.subheader("Plataforma de nivelamento educacional baseada em IA")
 
@@ -28,9 +26,9 @@ def main():
     """)
 
     st.divider()
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.info("### 🚀 Comece por aqui")
         st.write("Faça o upload de uma aula em PDF para iniciar o processo.")

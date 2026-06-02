@@ -1,8 +1,11 @@
 """Página de status de saúde dos serviços."""
-import streamlit as st
-import httpx
+
 import asyncio
-from frontend.streamlit.config import get_frontend_settings
+
+import httpx
+import streamlit as st
+
+from frontend.app.config import get_frontend_settings
 
 settings = get_frontend_settings()
 
@@ -22,16 +25,16 @@ async def check_api_health():
 def show_health():
     """Renderiza página de saúde."""
     st.title("🔍 Status do Sistema")
-    
+
     st.write("Verificando conexão com serviços...")
-    
+
     health_data = asyncio.run(check_api_health())
-    
+
     if health_data:
         st.success("✅ Backend está UP")
-        
+
         cols = st.columns(4)
-        
+
         with cols[0]:
             st.metric("Banco de Dados", health_data.get("database", "Unknown"))
         with cols[1]:
@@ -40,7 +43,7 @@ def show_health():
             st.metric("Storage (S3)", health_data.get("storage", "Unknown"))
         with cols[3]:
             st.metric("LLM Provider", health_data.get("llm_provider", "Unknown"))
-            
+
     else:
         st.error("❌ Backend está DOWN ou inacessível")
         st.write(f"Tentando conectar em: {settings.api_url}")
