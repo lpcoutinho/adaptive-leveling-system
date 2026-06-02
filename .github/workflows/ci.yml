@@ -47,7 +47,7 @@ jobs:
 
       - name: Set up Infrastructure
         run: |
-          docker-compose up -d
+          docker compose up -d
           # Wait for services to be healthy
           timeout 60s bash -c "until docker inspect --format='{{json .State.Health.Status}}' als-db | grep -q 'healthy'; do sleep 2; done"
           timeout 60s bash -c "until docker inspect --format='{{json .State.Health.Status}}' als-s3 | grep -q 'healthy'; do sleep 2; done"
