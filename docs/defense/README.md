@@ -10,10 +10,10 @@ Este diretório contém a documentação de defesa técnica para o **Adaptive Le
   * *Foco:* Arquitetura Local com Containers Dedicados (Postgres, Valkey, Minio).
   * *Destaques:* Camada Agnóstico de LLM (DI), OpenTelemetry (Jaeger), CI/CD (GitHub Actions), Logs Estruturados (Loguru), Testes Automatizados (81% coverage).
 
-### 📄 Processamento de Dados (Em Breve)
+### 📄 Processamento de Dados
 
-* **[Fase 2: Upload e Processamento de PDF]**
-  * *Foco:* Idempotência (SHA-256), S3 Integration, Extração Textual.
+* **[Fase 2: Upload e Processamento de PDF](fase_2_upload.md)**
+  * *Foco:* Idempotência (SHA-256), S3 Integration, Extração Textual com `pypdf`.
 
 ### 🧠 Engenharia de IA & LangGraph (Em Breve)
 

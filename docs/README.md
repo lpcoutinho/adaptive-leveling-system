@@ -23,6 +23,7 @@ docs/
 
 - [IMPLEMENTACAO.md](guides/IMPLEMENTACAO.md) - Plano detalhado de implementação por fases
 - [fase_1_fundacao.md](guides/fase_1_fundacao.md) - Guia de execução da Fase 1 (Fundação)
+- [fase_2_upload.md](guides/fase_2_upload.md) - Guia de execução da Fase 2 (Upload e Processamento)
 
 ### architecture/
 
