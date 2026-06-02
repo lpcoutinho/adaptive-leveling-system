@@ -1,4 +1,5 @@
 """Dependências FastAPI para LLM."""
+
 from backend.llm.base.interface import ILLMProvider
 from backend.llm.factory import LLMFactory
 

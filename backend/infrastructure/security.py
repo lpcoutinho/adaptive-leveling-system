@@ -1,7 +1,7 @@
 """Configurações de segurança e validação de input."""
-from fastapi import Request, HTTPException
+
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-import time
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

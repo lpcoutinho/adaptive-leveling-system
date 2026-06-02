@@ -1,15 +1,18 @@
 """Interface para os providers de LLM."""
+
 from abc import ABC, abstractmethod
-from typing import Type, TypeVar
+from typing import TypeVar
+
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
+
 
 class ILLMProvider(ABC):
     """Interface abstrata que define o contrato para todos os providers de LLM."""
 
     @abstractmethod
-    async def generate_structured(self, prompt: str, response_model: Type[T]) -> T:
+    async def generate_structured(self, prompt: str, response_model: type[T]) -> T:
         """
         Gera uma resposta estruturada baseada em um modelo Pydantic.
 

@@ -1,4 +1,5 @@
 """Factory para criação de instâncias de LLM providers."""
+
 from backend.llm.base.interface import ILLMProvider
 from backend.llm.config import get_llm_settings
 from backend.llm.providers.groq_provider import GroqProvider

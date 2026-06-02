@@ -1,4 +1,5 @@
 """Testes de conexão Valkey via floci ElastiCache."""
+
 import pytest
 
 
@@ -16,7 +17,7 @@ class TestValkeyConnection:
 
     async def test_cache_set_and_get(self):
         """Testa set/get no cache."""
-        from backend.infrastructure.cache import cache_set, cache_get
+        from backend.infrastructure.cache import cache_get, cache_set
 
         await cache_set("test_key", "test_value", ttl=60)
         value = await cache_get("test_key")
@@ -24,11 +25,12 @@ class TestValkeyConnection:
 
         # Limpar
         from backend.infrastructure.cache import cache_delete
+
         await cache_delete("test_key")
 
     async def test_cache_delete(self):
         """Testa delete no cache."""
-        from backend.infrastructure.cache import cache_set, cache_get, cache_delete
+        from backend.infrastructure.cache import cache_delete, cache_get, cache_set
 
         await cache_set("delete_me", "value", ttl=60)
         await cache_delete("delete_me")

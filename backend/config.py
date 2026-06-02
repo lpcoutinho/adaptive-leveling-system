@@ -1,4 +1,5 @@
 """Configuração centralizada da aplicação."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,9 +50,7 @@ class Settings(BaseSettings):
     otel_service_name: str = "adaptive-leveling-system"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
 
 

@@ -1,5 +1,9 @@
 """PostgreSQL connection e queries via floci RDS."""
+
+from typing import Any, cast
+
 import asyncpg
+
 from backend.config import get_settings
 
 _settings = get_settings()
@@ -7,34 +11,29 @@ _settings = get_settings()
 
 async def get_db_connection():
     """
-    Retorna conexão assíncrona com PostgreSQL.
+    Estabelece conexão assíncrona com PostgreSQL.
 
     Returns:
-        Connection: Conexão asyncpg
+        asyncpg.Connection: Objeto de conexão.
     """
     return await asyncpg.connect(_settings.database_url)
 
 
-async def execute_query(query: str, *args, fetch: str = "all") -> list | None:
+async def execute_query(query: str, *args: Any) -> list[Any] | None:
     """
-    Executa query e retorna resultados.
+    Executa uma query no banco de dados e retorna os resultados.
 
     Args:
-        query: SQL query string
-        *args: Parâmetros da query
-        fetch: Tipo de fetch ('all', 'one', 'val', None)
+        query: A string SQL a ser executada.
+        *args: Argumentos para a query.
 
     Returns:
-        Lista de resultados ou valor único
+        list[Any] | None: Lista de registros ou None para comandos sem retorno.
     """
     conn = await get_db_connection()
     try:
-        if fetch == "all":
-            return await conn.fetch(query, *args)
-        elif fetch == "one":
-            return await conn.fetchrow(query, *args)
-        elif fetch == "val":
-            return await conn.fetchval(query, *args)
+        if query.strip().upper().startswith("SELECT"):
+            return cast(list[Any], await conn.fetch(query, *args))
         else:
             await conn.execute(query, *args)
             return None
@@ -51,7 +50,7 @@ async def ping_database() -> bool:
     """
     try:
         conn = await get_db_connection()
-        version = await conn.fetchval("SELECT version()")
+        await conn.fetchval("SELECT version()")
         await conn.close()
         return True
     except Exception as e:

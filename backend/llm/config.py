@@ -1,4 +1,5 @@
 """Configuração para os providers de LLM."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,10 +20,7 @@ class LLMSettings(BaseSettings):
     llm_max_retries: int = 3
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
 

@@ -1,4 +1,5 @@
 """Configuração de métricas customizadas."""
+
 # Placeholder para métricas (prom-client ou similar futuramente)
 from backend.infrastructure.telemetry.logger import log
 

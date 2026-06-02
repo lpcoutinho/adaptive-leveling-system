@@ -1,5 +1,9 @@
 """Valkey client via floci ElastiCache."""
+
+from typing import Any, cast
+
 import redis.asyncio as redis
+
 from backend.config import get_settings
 
 _settings = get_settings()
@@ -8,60 +12,74 @@ _client: redis.Redis | None = None
 
 async def get_cache_client() -> redis.Redis:
     """
-    Retorna cliente Valkey (Redis-compatible).
+    Retorna cliente singleton para Valkey (Redis).
 
     Returns:
-        redis.Redis: Cliente assíncrono Valkey
+        redis.Redis: Cliente Redis assíncrono.
     """
     global _client
     if _client is None:
-        _client = redis.Redis.from_url(
-            _settings.redis_url,
-            encoding="utf-8",
-            decode_responses=True,
-        )
+        _client = redis.from_url(_settings.redis_url, decode_responses=True)
     return _client
 
 
-async def cache_set(key: str, value: str | int | float, ttl: int = 3600) -> None:
+async def cache_set(key: str, value: Any, ttl: int | None = None) -> bool:
     """
-    Define valor no cache.
+    Armazena valor no cache.
 
     Args:
-        key: Chave do cache
-        value: Valor a armazenar
-        ttl: Time to live em segundos (default 3600)
+        key: Chave do cache.
+        value: Valor a ser armazenado.
+        ttl: Tempo de vida em segundos.
+
+    Returns:
+        bool: True se sucesso.
     """
     client = await get_cache_client()
-    await client.set(key, value, ex=ttl)
+    return cast(bool, await client.set(key, str(value), ex=ttl))
 
 
 async def cache_get(key: str) -> str | None:
     """
-    Obtém valor do cache.
+    Recupera valor do cache.
 
     Args:
-        key: Chave do cache
+        key: Chave do cache.
 
     Returns:
-        Valor ou None se não existir
+        str | None: Valor armazenado ou None se não encontrado.
     """
     client = await get_cache_client()
-    return await client.get(key)
+    result = await client.get(key)
+    return cast(str, result) if result is not None else None
 
 
-async def cache_delete(key: str) -> int | None:
+async def cache_delete(key: str) -> bool:
     """
-    Remove valor do cache.
+    Remove chave do cache.
 
     Args:
-        key: Chave a deletar
+        key: Chave do cache.
 
     Returns:
-        Número de chaves deletadas
+        bool: True se sucesso.
     """
     client = await get_cache_client()
-    return await client.delete(key)
+    return cast(int, await client.delete(key)) > 0
+
+
+async def cache_increment(key: str) -> int:
+    """
+    Incrementa um contador no cache.
+
+    Args:
+        key: Chave do contador.
+
+    Returns:
+        int: Novo valor do contador.
+    """
+    client = await get_cache_client()
+    return cast(int, await client.incr(key))
 
 
 async def ping_cache() -> bool:
@@ -69,12 +87,11 @@ async def ping_cache() -> bool:
     Testa conexão com Valkey.
 
     Returns:
-        bool: True se conexão está saudável
+        bool: True se saudável.
     """
     try:
         client = await get_cache_client()
-        response = await client.ping()
-        return response is True
+        return cast(bool, await client.ping())
     except Exception as e:
         print(f"Cache ping failed: {e}")
         return False

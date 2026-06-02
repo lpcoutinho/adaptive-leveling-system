@@ -1,4 +1,5 @@
 """Testes de conexão S3 via floci."""
+
 import pytest
 
 
@@ -22,7 +23,7 @@ class TestS3Connection:
 
     async def test_s3_create_and_delete_bucket(self):
         """Testa criação e remoção de bucket."""
-        from backend.infrastructure.storage import create_bucket, delete_bucket, bucket_exists
+        from backend.infrastructure.storage import bucket_exists, create_bucket, delete_bucket
 
         bucket_name = "test-bucket-123"
 
@@ -38,9 +39,9 @@ class TestS3Connection:
         """Testa upload/download de objeto."""
         from backend.infrastructure.storage import (
             create_bucket,
-            upload_object,
-            download_object,
             delete_object,
+            download_object,
+            upload_object,
         )
 
         bucket_name = "test-upload-bucket"

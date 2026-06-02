@@ -1,7 +1,10 @@
 """Implementação do provider Groq."""
-from typing import Type, TypeVar
-from pydantic import BaseModel
+
+from typing import TypeVar
+
 from groq import AsyncGroq
+from pydantic import BaseModel
+
 from backend.llm.base.interface import ILLMProvider
 from backend.llm.config import get_llm_settings
 
@@ -15,7 +18,7 @@ class GroqProvider(ILLMProvider):
     def __init__(self):
         self.client = AsyncGroq(api_key=_settings.groq_api_key)
 
-    async def generate_structured(self, prompt: str, response_model: Type[T]) -> T:
+    async def generate_structured(self, prompt: str, response_model: type[T]) -> T:
         """Gera resposta estruturada via Groq (usando tool calling ou JSON mode)."""
         # Simplificação para Fase 1
         completion = await self.client.chat.completions.create(
@@ -24,6 +27,8 @@ class GroqProvider(ILLMProvider):
             response_format={"type": "json_object"},
         )
         content = completion.choices[0].message.content
+        if content is None:
+            raise ValueError("Groq returned empty content")
         return response_model.model_validate_json(content)
 
     async def generate_text(self, prompt: str) -> str:
@@ -32,7 +37,8 @@ class GroqProvider(ILLMProvider):
             model=_settings.llm_primary_model,
             messages=[{"role": "user", "content": prompt}],
         )
-        return completion.choices[0].message.content
+        content = completion.choices[0].message.content
+        return str(content) if content is not None else ""
 
     def get_provider_name(self) -> str:
         """Retorna o nome do provider."""

@@ -1,20 +1,27 @@
 """Testes para interface ILLMProvider."""
+
+from typing import TypeVar
+
 import pytest
 from pydantic import BaseModel
+
 from backend.llm.base.interface import ILLMProvider
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class DummyResponse(BaseModel):
     """Modelo de resposta dummy para testes."""
+
     message: str
 
 
 class DummyProvider(ILLMProvider):
     """Implementação dummy para testes."""
 
-    async def generate_structured(self, prompt: str, response_model: type) -> BaseModel:
+    async def generate_structured(self, prompt: str, response_model: type[T]) -> T:
         """Gera resposta estruturada dummy."""
-        return response_model(message="dummy response")
+        return response_model.model_validate({"message": "dummy response"})
 
     async def generate_text(self, prompt: str) -> str:
         """Gera texto dummy."""
@@ -33,9 +40,9 @@ class TestILLMProvider:
         """Testa que provider concreto implementa todos os métodos abstratos."""
         provider = DummyProvider()
 
-        assert hasattr(provider, 'generate_structured')
-        assert hasattr(provider, 'generate_text')
-        assert hasattr(provider, 'get_provider_name')
+        assert hasattr(provider, "generate_structured")
+        assert hasattr(provider, "generate_text")
+        assert hasattr(provider, "get_provider_name")
 
     async def test_generate_structured_returns_correct_type(self):
         """Testa que generate_structured retorna o modelo esperado."""

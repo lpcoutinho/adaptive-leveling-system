@@ -1,6 +1,7 @@
 """Testes de conexão PostgreSQL via floci RDS."""
-import pytest
+
 import asyncpg
+import pytest
 
 
 @pytest.mark.asyncio
@@ -10,6 +11,7 @@ class TestPostgreSQLConnection:
     async def test_database_connection_successful(self):
         """Testa que conexão com PostgreSQL é estabelecida."""
         from backend.config import get_settings
+
         settings = get_settings()
 
         conn = await asyncpg.connect(settings.database_url)
@@ -18,10 +20,8 @@ class TestPostgreSQLConnection:
 
     async def test_database_query_executes(self):
         """Testa que query simples executa com sucesso."""
-        from backend.config import get_settings
         from backend.infrastructure.database import execute_query
 
-        settings = get_settings()
         result = await execute_query("SELECT 1 as value")
         assert result[0]["value"] == 1
 

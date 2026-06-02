@@ -1,6 +1,11 @@
 """Client S3 para armazenamento de documentos (Minio)."""
+
+import contextlib
+from typing import cast
+
 import boto3
 from botocore.client import Config
+
 from backend.config import get_settings
 
 _settings = get_settings()
@@ -43,10 +48,10 @@ async def create_bucket(bucket_name: str) -> None:
         bucket_name: Nome do bucket a ser criado.
     """
     client = get_s3_client()
-    try:
+    with contextlib.suppress(
+        client.exceptions.BucketAlreadyOwnedByYou, client.exceptions.BucketAlreadyExists
+    ):
         client.create_bucket(Bucket=bucket_name)
-    except (client.exceptions.BucketAlreadyOwnedByYou, client.exceptions.BucketAlreadyExists):
-        pass
 
 
 async def delete_bucket(bucket_name: str) -> None:
@@ -104,7 +109,7 @@ async def download_object(bucket: str, key: str) -> bytes:
     """
     client = get_s3_client()
     response = client.get_object(Bucket=bucket, Key=key)
-    return response["Body"].read()
+    return cast(bytes, response["Body"].read())
 
 
 async def delete_object(bucket: str, key: str) -> None:
