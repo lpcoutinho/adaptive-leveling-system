@@ -10,8 +10,9 @@ Este plano implementa a **Fase 1** do Adaptive Leveling System: Fundação e Inf
 - Python 3.12 com Poetry/pip
 - FastAPI (backend API)
 - Streamlit (frontend)
-- floci (S3 + PostgreSQL + Valkey)
+- Postgres + Valkey + Minio
 - OpenTelemetry + Loguru (observabilidade)
+- Jaeger (tracing distribuído)
 - LLM Abstraction Layer (Groq, Mock)
 
 ---
@@ -21,10 +22,9 @@ Este plano implementa a **Fase 1** do Adaptive Leveling System: Fundação e Inf
 ```
 adaptive-leveling-system/
 ├── pyproject.toml                    # Dependências
-├── docker-compose.yml                # floci
+├── docker-compose.yml                # Containers
 ├── .env.example                      # Exemplo de env vars
 ├── .gitignore                        # (já criado)
-├── CLAUDE.md                         # (já criado)
 │
 ├── backend/
 │   ├── __init__.py
@@ -94,7 +94,7 @@ adaptive-leveling-system/
 **Arquivos:**
 - `pyproject.toml` - Dependências completas
 - `.env.example` - Template de environment variables
-- `docker-compose.yml` - floci configuration
+- `docker-compose.yml` - Infrastructure configuration (Postgres, Valkey, Minio)
 
 **Dependências do pyproject.toml:**
 ```toml
@@ -166,18 +166,18 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # Database (PostgreSQL/floci)
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5433/postgres"
+    # Database (PostgreSQL)
+    DATABASE_URL: str = "postgresql://postgres:postgres@127.0.0.1:5435/postgres?sslmode=disable"
 
-    # Cache (Valkey/floci)
-    REDIS_URL: str = "redis://localhost:6379/0"
+    # Cache (Valkey)
+    REDIS_URL: str = "redis://127.0.0.1:6385/0"
 
-    # Storage (S3/floci)
-    AWS_ACCESS_KEY_ID: str = "test"
-    AWS_SECRET_ACCESS_KEY: str = "test"
+    # Storage (S3/Minio)
+    AWS_ACCESS_KEY_ID: str = "minioadmin"
+    AWS_SECRET_ACCESS_KEY: str = "minioadmin"
     AWS_REGION: str = "us-east-1"
-    S3_ENDPOINT_URL: str = "http://localhost:4566"
-    S3_BUCKET: str = "ppasq-documents"
+    S3_ENDPOINT_URL: str = "http://127.0.0.1:9005"
+    S3_BUCKET: str = "als-documents"
 
     # LLM
     LLM_PROVIDER: str = "groq"
@@ -209,8 +209,8 @@ def setup_telemetry(service_name: str) -> None:
 
 **Arquivos:**
 1. `backend/infrastructure/database.py` - PostgreSQL connection pool
-2. `backend/infrastructure/cache.py` - Valkey client com serialization
-3. `backend/infrastructure/storage.py` - S3 client com presigned URLs
+2. `backend/infrastructure/cache.py" - Valkey client com serialization
+3. `backend/infrastructure/storage.py` - S3 client (Minio) com presigned URLs
 4. `migrations/001_initial_schema.sql` - Schema inicial
 
 **Schema SQL:**
@@ -311,10 +311,10 @@ async def http_client():
 
 - [ ] Backend inicia sem erros (`uvicorn backend.main:app`)
 - [ ] Health check retorna 200 (`GET /health`)
-- [ ] floci (S3 + PostgreSQL + Valkey) conectam
+- [ ] Containers (S3, DB, Cache) conectam
 - [ ] Traces visíveis no console (OpenTelemetry)
 - [ ] Frontend Streamlit inicia e mostra status
-- [ ] Upload/download de teste no S3 funciona
+- [ ] Upload/download no Minio funciona
 - [ ] Valkey cache operations funcionam
 - [ ] Todos os testes passam
 
@@ -323,36 +323,33 @@ async def http_client():
 ## Verificação Final
 
 ```bash
-# 1. Iniciar floci
+# 1. Iniciar containers
 docker-compose up -d
 
-# 2. Criar bucket S3
-aws --endpoint-url=http://localhost:4566 s3 mb s3://ppasq-documents
-
-# 3. Instalar dependências
+# 2. Instalar dependências
 poetry install
 
-# 4. Configurar environment
+# 3. Configurar environment
 cp .env.example .env
 # Editar .env com chaves API
 
-# 5. Rodar migrations
-psql -h localhost -p 5433 -U postgres -d postgres -f migrations/001_initial_schema.sql
+# 4. Rodar migrations (porta 5435)
+psql -h 127.0.0.1 -p 5435 -U postgres -d postgres -f migrations/001_initial_schema.sql
 
-# 6. Iniciar backend
+# 5. Iniciar backend
 LLM_PROVIDER=mock uvicorn backend.main:app --reload
 
-# 7. Testar health
+# 6. Testar health
 curl http://localhost:8000/health
+
+# 7. Acessar Traces (Jaeger)
+# Abra no navegador: http://localhost:16686
 
 # 8. Iniciar frontend
 streamlit run frontend/streamlit/app.py
 
 # 9. Rodar testes
 pytest tests/ -v
-
-# 10. Verificar traces
-# Ver console output para traces do OpenTelemetry
 ```
 
 ---
@@ -360,7 +357,7 @@ pytest tests/ -v
 ## Arquivos Críticos
 
 **Infraestrutura:**
-- `docker-compose.yml` - floci (S3 + PostgreSQL + Valkey)
+- `docker-compose.yml` - Postgres + Valkey + Minio
 - `pyproject.toml` - Dependências
 
 **LLM Abstraction:**
@@ -375,7 +372,7 @@ pytest tests/ -v
 - `backend/main.py` - FastAPI app
 - `backend/infrastructure/database.py` - PostgreSQL
 - `backend/infrastructure/cache.py` - Valkey
-- `backend/infrastructure/storage.py` - S3
+- `backend/infrastructure/storage.py` - S3 (Minio)
 
 **Telemetria:**
 - `backend/infrastructure/telemetry/tracer.py` - OpenTelemetry

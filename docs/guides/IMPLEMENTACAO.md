@@ -6,7 +6,7 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 
 **Estratégia:** Full Stack Vertical (cada fase com backend + frontend + testes + observabilidade completos)
 
-**Stack:** LLM Abstraction + Groq/OpenAI/Anthropic + floci (S3 + PostgreSQL + Valkey) + OpenTelemetry (completo desde o início)
+**Stack:** LLM Abstraction + Groq/OpenAI/Anthropic + Postgres + Valkey + Minio + OpenTelemetry + Jaeger + Langfuse (Fase 3)
 
 **LLM Abstraction com Dependency Injection:**
 - **Interface ILLMProvider**: Contrato abstrato para providers
@@ -14,12 +14,13 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 - **DI Setup**: FastAPI Depends + Provider Factory
 - **Configuração**: LLM_PROVIDER=groq|openai|anthropic|mock (via env var)
 - **Resiliência**: Retry, Timeout, Circuit Breaker, Fallback Chain
+- **Observabilidade**: Jaeger (Tracing) e Langfuse (LLM Monitoring - Fase 3)
 
-**Arquitetura com floci - Tudo-em-Um:**
-- **floci S3**: PDFs armazenados como objetos (porta 4566)
-- **floci RDS (PostgreSQL)**: Metadados + dados relacionais (porta 5433)
-- **floci ElastiCache (Valkey)**: Cache de resultados processados (porta 6379)
-- **Vantagens**: Único container para S3 + DB + Cache, simplificado para desenvolvimento
+**Arquitetura Local com Containers Dedicados:**
+- **Minio (S3)**: PDFs armazenados como objetos (porta 9005 API, 9006 Console)
+- **PostgreSQL**: Metadados + dados relacionais (porta 5435)
+- **Valkey**: Cache de resultados processados (porta 6385)
+- **Vantagens**: Isolamento total, portas exclusivas para evitar conflitos, compatibilidade nativa com drivers async.
 
 ---
 
@@ -48,65 +49,114 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 - `backend/infrastructure/telemetry/tracer.py` - OpenTelemetry setup (tracing + metrics)
 - `backend/infrastructure/telemetry/metrics.py` - Métricas customizadas
 - `backend/infrastructure/telemetry/logger.py` - Loguru wrapper com structured logging
-- `backend/infrastructure/database.py` - PostgreSQL (floci RDS) connection pool com retry logic
-- `backend/infrastructure/cache.py` - Valkey client (floci ElastiCache) com serialization
-- `backend/infrastructure/storage.py` - S3 client (floci) com presigned URLs (endpoint_url=http://localhost:4566)
+- `backend/infrastructure/database.py` - PostgreSQL connection pool com retry logic
+- `backend/infrastructure/cache.py` - Valkey client com serialization
+- `backend/infrastructure/storage.py` - S3 client (Minio) com presigned URLs (endpoint_url=http://localhost:9005)
 - `backend/infrastructure/security.py` - Input validation, rate limiting
-- `backend/api/routes/health.py` - Health check (floci, Redis, Groq)
+- `backend/api/routes/health.py` - Health check (DB, Redis, Groq)
 - `migrations/001_initial_schema.sql` - Schema base (sem BLOB, apenas metadados)
 
 ### Frontend
 - `frontend/streamlit/app.py` - App principal com sidebar
-- `frontend/streamlit/pages/health.py` - Health check page
+- `frontend/streamlit/pages/health.py" - Health check page
 - `frontend/streamlit/config.py` - Configuração do frontend
 
 ### Infraestrutura
-- `docker-compose.yml` - floci (S3 + PostgreSQL + Valkey)
+- `docker-compose.yml` - Postgres + Valkey + Minio
 
 ```yaml
 services:
-  floci:
-    image: floci/floci:latest
-    container_name: ppasq-floci
+  db:
+    image: postgres:16-alpine
+    container_name: als-db
     ports:
-      - "4566:4566"  # S3 API
-      - "5433:5432"  # PostgreSQL
-      - "6379:6379"  # Valkey (ElastiCache)
+      - "5435:5432"
     environment:
-      SERVICES: s3,rds,elasticache,cloudwatch,logs
-      ELASTICACHE_REDIS_ENGINE: valkey
-      DEBUG: 1
-      DATA_DIR: /tmp/localstack_data
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - floci_data:/tmp/localstack_data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 30s
+    networks:
+      - als
+
+  cache:
+    image: valkey/valkey:8
+    container_name: als-cache
+    ports:
+      - "6385:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - als
+
+  s3:
+    image: minio/minio
+    container_name: als-s3
+    ports:
+      - "9005:9000"
+      - "9006:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - als
+
+  create-buckets:
+    image: minio/mc
+    container_name: als-init-s3
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://s3:9000 minioadmin minioadmin;
+      /usr/bin/mc mb local/als-documents;
+      /usr/bin/mc policy set public local/als-documents;
+      exit 0;
+      "
+    networks:
+      - als
 
 volumes:
-  floci_data:
+  postgres_data:
     driver: local
+  minio_data:
+    driver: local
+
+networks:
+  als:
+    driver: bridge
 ```
 
 ### Testes
-- `tests/test_infrastructure.py` - Testes DB, Valkey, config
+- `tests/test_infrastructure.py` - Testes DB, Valkey, S3, config
 - `tests/test_api_health.py` - Testes health endpoints
 - `tests/conftest.py` - Fixtures (DB, Valkey, HTTP client)
 
 ### Critérios de Aceitação
 - Backend inicia sem erros, health check retorna 200
-- floci (S3 + PostgreSQL + Valkey) conectam
+- Containers (S3, DB, Cache) saudáveis e conectáveis
 - Traces visíveis no Jaeger/Console
 - Frontend inicia e mostra status dos serviços
-- Upload/download de teste no S3 (floci) funciona
-- Valkey (ElastiCache) cache operations funcionam
+- Upload/download no Minio funciona
+- Valkey cache operations funcionam
 
 ---
 
@@ -149,7 +199,7 @@ volumes:
 
 ## Fase 3: Extração de Pré-requisitos com LLM
 
-**Objetivo:** Extrair pré-requisitos usando LLM Abstraction com structured outputs.
+**Objetivo:** Extrair pré-requisitos usando LLM Abstraction com structured outputs e monitoramento com Langfuse.
 
 ### Backend
 - `backend/domain/models/prerequisite.py` - Prerequisite, ConceptNode (Pydantic)
@@ -159,7 +209,7 @@ volumes:
   - `providers/mock_provider.py` - Mock para testes
   - `prompts/prerequisite_extractor_v1.txt` - Prompt template versionado
 - `backend/services/prerequisite_service.py` - extract_prerequisites, build_knowledge_graph (usa ILLMProvider via DI)
-- `backend/api/routes/prerequisites.py` - POST /extract, GET /{pdf_id}, GET /{pdf_id}/graph
+- `backend/api/routes/prerequisites.py" - POST /extract, GET /{pdf_id}, GET /{pdf_id}/graph
 
 ### Frontend
 - `frontend/streamlit/pages/prerequisites.py` - Lista de pré-requisitos, filtragem por importance
@@ -261,7 +311,7 @@ volumes:
 **Objetivo:** Gerar conteúdo de nivelamento personalizado para cada gap.
 
 ### Backend
-- `backend/domain/models/leveling.py` - GapExplanation, LevelingPlan (Pydantic)
+- `backend/domain/models/leveling.py" - GapExplanation, LevelingPlan (Pydantic)
 - `backend/services/leveling_service.py` - generate_leveling_content, create_study_order
 - `backend/llm/prompts/leveling_generator_v1.txt` - Leveling prompt
 - `backend/infrastructure/repository/leveling_repository.py` - DB operations
@@ -374,8 +424,8 @@ volumes:
          │ SIM   │ NÃO
          ▼       ▼
     ┌──────┐  ┌─────────────────┐
-    │Reuse │  │ Upload S3 (floci)│
-    └──────┘  │ (bucket_key)    │
+    │Reuse │  │ Upload S3       │
+    └──────┘  │ (Minio)         │
               └────────┬─────────┘
                        ▼
               ┌─────────────────┐
@@ -386,28 +436,26 @@ volumes:
               ┌─────────────────┐
               │ Salvar metadata  │
               │ no PostgreSQL   │
-              │ (floci RDS)     │
               └────────┬─────────┘
                        ▼
               ┌─────────────────┐
               │ Cache Valkey    │
-              │ (floci Elasti)  │
               └─────────────────┘
 ```
 
 **Vantagens desta arquitetura:**
-- **floci tudo-em-um**: S3 + PostgreSQL + Valkey em um único container
-- PDFs no S3: escalável, custo menor, não polui o DB
-- PostgreSQL leve: apenas metadados relacionais
-- Presigned URLs: download seguro com expiração
-- Cache Valkey: evita reprocessamento, protocolo Redis compatível
-- Deploy simplificado: apenas um container para infra local
+- **Containers Dedicados**: S3 (Minio) + PostgreSQL + Valkey em containers independentes.
+- PDFs no S3: escalável, custo menor, não polui o DB.
+- PostgreSQL leve: apenas metadados relacionais.
+- Presigned URLs: download seguro com expiração.
+- Cache Valkey: evita reprocessamento, protocolo Redis compatível.
+- Deploy isolado: portas exclusivas para evitar conflitos locais.
 
-**Configuração floci:**
-- S3 endpoint: `http://localhost:4566`
-- PostgreSQL (RDS): `localhost:5433`
-- Valkey (ElastiCache): `localhost:6379`
-- AWS credentials fake para desenvolvimento
+**Configuração Local:**
+- S3 endpoint: `http://localhost:9005`
+- PostgreSQL: `localhost:5435`
+- Valkey: `localhost:6385`
+- AWS credentials (Minio): `minioadmin`
 
 ---
 
@@ -447,9 +495,9 @@ volumes:
          ▼               ▼               ▼
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
 │  GroqProvider│  │OpenAIProvider│  │AnthropicProv.│
-└──────────────┘  └──────────────┘  └──────────────┘
+└──────────────┘  └──────────────┘  └──────────────┐
          │               │               │
-         └───────────────┼───────────────┘
+         └───────────────────────────────┼────────────────┘
                          │
                          ▼
          ┌───────────────────────────────┐
@@ -476,7 +524,7 @@ class ILLMProvider(ABC):
     async def generate_text(self, prompt: str) -> str
 
     @abstractmethod
-    async def stream(self, prompt: str) -> AsyncIterator[str]
+    def get_provider_name(self) -> str
 ```
 
 **Configuração:**
@@ -532,13 +580,13 @@ Personalized Study Plan
 ## Arquivos Críticos por Fase
 
 **Fase 1:**
-- `docker-compose.yml` - floci (S3 + PostgreSQL + Valkey)
-- `pyproject.toml` - Dependências (incluindo redis-py para Valkey)
+- `docker-compose.yml` - Postgres + Valkey + Minio
+- `pyproject.toml" - Dependências (incluindo redis-py para Valkey)
 - `backend/main.py` - FastAPI entry point
 - `backend/infrastructure/telemetry/tracer.py` - OpenTelemetry
-- `backend/infrastructure/database.py` - PostgreSQL (floci RDS)
-- `backend/infrastructure/cache.py` - Valkey client (floci ElastiCache)
-- `backend/infrastructure/storage.py` - S3 client (floci)
+- `backend/infrastructure/database.py` - PostgreSQL
+- `backend/infrastructure/cache.py` - Valkey client
+- `backend/infrastructure/storage.py` - S3 (Minio)
 
 **Fase 2:**
 - `backend/domain/models/pdf.py` - PDF model
