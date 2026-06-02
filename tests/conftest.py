@@ -14,6 +14,15 @@ def event_loop():
     loop.close()
 
 
+@pytest.fixture(autouse=True)
+async def clean_database():
+    """Limpa as tabelas do banco de dados antes de cada teste."""
+    from backend.infrastructure.database import execute_query
+
+    await execute_query("TRUNCATE TABLE pdf_documents CASCADE")
+    yield
+
+
 @pytest.fixture
 def test_settings():
     """Configurações para testes."""
