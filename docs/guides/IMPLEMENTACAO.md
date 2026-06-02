@@ -9,6 +9,7 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 **Stack:** LLM Abstraction + Groq/OpenAI/Anthropic + Postgres + Valkey + Minio + OpenTelemetry + Jaeger + Langfuse (Fase 3)
 
 **LLM Abstraction com Dependency Injection:**
+
 - **Interface ILLMProvider**: Contrato abstrato para providers
 - **Providers**: Groq, OpenAI, Anthropic, Mock (testes)
 - **DI Setup**: FastAPI Depends + Provider Factory
@@ -17,6 +18,7 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 - **Observabilidade**: Jaeger (Tracing) e Langfuse (LLM Monitoring - Fase 3)
 
 **Arquitetura Local com Containers Dedicados:**
+
 - **Minio (S3)**: PDFs armazenados como objetos (porta 9005 API, 9006 Console)
 - **PostgreSQL**: Metadados + dados relacionais (porta 5435)
 - **Valkey**: Cache de resultados processados (porta 6385)
@@ -29,6 +31,7 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 **Objetivo:** Estabelecer toda a fundação técnica com infraestruturas críticas configuradas.
 
 ### Backend
+
 - `pyproject.toml` - Dependências (FastAPI, LangGraph, PydanticAI, Groq, boto3/S3, OpenTelemetry, Loguru, redis-py)
 - `backend/main.py` - FastAPI app factory com CORS, exception handlers
 - `backend/config.py` - Configuração centralizada (settings, secrets via env vars)
@@ -51,17 +54,19 @@ Este plano implementa o **Case 1 - Nivelamento** do desafio técnico, usando LLM
 - `backend/infrastructure/telemetry/logger.py` - Loguru wrapper com structured logging
 - `backend/infrastructure/database.py` - PostgreSQL connection pool com retry logic
 - `backend/infrastructure/cache.py` - Valkey client com serialization
-- `backend/infrastructure/storage.py` - S3 client (Minio) com presigned URLs (endpoint_url=http://localhost:9005)
+- `backend/infrastructure/storage.py` - S3 client (Minio) com presigned URLs (endpoint_url=<http://localhost:9005>)
 - `backend/infrastructure/security.py` - Input validation, rate limiting
 - `backend/api/routes/health.py` - Health check (DB, Redis, Groq)
 - `migrations/001_initial_schema.sql` - Schema base (sem BLOB, apenas metadados)
 
 ### Frontend
-- `frontend/streamlit/app.py` - App principal com sidebar
-- `frontend/streamlit/pages/health.py" - Health check page
-- `frontend/streamlit/config.py` - Configuração do frontend
+
+- `frontend/app/app.py` - App principal com sidebar
+- `frontend/app/pages/health.py" - Health check page
+- `frontend/app/config.py` - Configuração do frontend
 
 ### Infraestrutura
+
 - `docker-compose.yml` - Postgres + Valkey + Minio
 
 ```yaml
@@ -146,11 +151,13 @@ networks:
 ```
 
 ### Testes
+
 - `tests/test_infrastructure.py` - Testes DB, Valkey, S3, config
 - `tests/test_api_health.py` - Testes health endpoints
 - `tests/conftest.py` - Fixtures (DB, Valkey, HTTP client)
 
 ### Critérios de Aceitação
+
 - Backend inicia sem erros, health check retorna 200
 - Containers (S3, DB, Cache) saudáveis e conectáveis
 - Traces visíveis no Jaeger/Console
@@ -165,6 +172,7 @@ networks:
 **Objetivo:** Upload de PDF com processamento, cache e idempotência.
 
 ### Backend
+
 - `backend/domain/models/pdf.py` - PDFDocument, PDFMetadata (Pydantic)
 - `backend/domain/models/common.py` - BaseModel, Timestamps
 - `backend/services/pdf_service.py` - Upload para S3, extração de texto (PyPDF2), hash SHA-256, validação, normalização
@@ -175,11 +183,13 @@ networks:
 - `backend/api/schemas/pdf.py` - Request/response schemas
 
 ### Frontend
-- `frontend/streamlit/pages/upload.py` - File uploader, drag & drop, preview
-- `frontend/streamlit/components/pdf_preview.py` - PDF preview component
-- `frontend/streamlit/components/pdf_download.py` - Download button com presigned URL
+
+- `frontend/app/pages/upload.py` - File uploader, drag & drop, preview
+- `frontend/app/components/pdf_preview.py` - PDF preview component
+- `frontend/app/components/pdf_download.py` - Download button com presigned URL
 
 ### Testes
+
 - `tests/test_pdf_service.py` - Extração, hash, validação
 - `tests/test_pdf_routes.py` - API endpoints
 - `tests/test_pdf_storage.py` - S3 operations
@@ -188,6 +198,7 @@ networks:
 - `tests/fixtures/calculus_1.pdf` - Sample PDF
 
 ### Critérios de Aceitação
+
 - Upload funciona, PDF enviado para S3
 - Hash SHA-256 gerado e metadados salvos no PostgreSQL
 - Cache Valkey funciona
@@ -202,6 +213,7 @@ networks:
 **Objetivo:** Extrair pré-requisitos usando LLM Abstraction com structured outputs e monitoramento com Langfuse.
 
 ### Backend
+
 - `backend/domain/models/prerequisite.py` - Prerequisite, ConceptNode (Pydantic)
 - `backend/domain/models/knowledge_graph.py` - KnowledgeGraph
 - `backend/llm/` - LLM Abstraction (implementado na Fase 1)
@@ -212,15 +224,18 @@ networks:
 - `backend/api/routes/prerequisites.py" - POST /extract, GET /{pdf_id}, GET /{pdf_id}/graph
 
 ### Frontend
-- `frontend/streamlit/pages/prerequisites.py` - Lista de pré-requisitos, filtragem por importance
-- `frontend/streamlit/components/knowledge_graph.py` - Graph visualization (network graph)
+
+- `frontend/app/pages/prerequisites.py` - Lista de pré-requisitos, filtragem por importance
+- `frontend/app/components/knowledge_graph.py` - Graph visualization (network graph)
 
 ### Testes
+
 - `tests/test_prerequisite_service.py` - Extraction com mock LLM
 - `tests/test_llm_provider.py` - Groq API, retry, fallback
 - `tests/fixtures/prerequisite_fixtures.py` - Mock data
 
 ### Critérios de Aceitação
+
 - Extração funciona via API, structured output validado
 - Knowledge graph construído corretamente
 - Cache funciona, idempotência (reuso)
@@ -233,6 +248,7 @@ networks:
 **Objetivo:** Gerar questões de avaliação baseadas nos pré-requisitos.
 
 ### Backend
+
 - `backend/domain/models/assessment.py` - QuizQuestion, Assessment, QuestionType (Pydantic)
 - `backend/domain/models/student.py` - Student, StudentAnswer
 - `backend/services/assessment_service.py` - generate_assessment com balanceamento de tipos (40% MC, 30% SA, 30% Calc)
@@ -242,14 +258,17 @@ networks:
 - `backend/api/routes/assessment.py` - POST /generate, GET /{assessment_id}
 
 ### Frontend
-- `frontend/streamlit/pages/assessment.py` - Lista de questões, filtragem, preview
-- `frontend/streamlit/components/quiz.py` - Quiz widget base
+
+- `frontend/app/pages/assessment.py` - Lista de questões, filtragem, preview
+- `frontend/app/components/quiz.py` - Quiz widget base
 
 ### Testes
+
 - `tests/test_assessment_service.py` - Geração com mock LLM
 - `tests/fixtures/assessment_fixtures.py` - Mock assessments
 
 ### Critérios de Aceitação
+
 - Questões geradas com tipos corretos
 - Distribuição balanceada, cache funciona
 
@@ -260,6 +279,7 @@ networks:
 **Objetivo:** Quiz interativo com correção (objetiva + LLM-as-a-Judge).
 
 ### Backend
+
 - `backend/services/quiz_service.py` - Quiz logic, evaluate_answer (deterministic para MC, LLM para SA/Calc)
 - `backend/llm/evaluators/answer_evaluator.py` - LLM-as-a-Judge
 - `backend/infrastructure/repository/student_repository.py` - Student progress
@@ -267,14 +287,17 @@ networks:
 - `backend/api/routes/quiz.py` - GET /start, GET /questions, POST /answer, POST /finish
 
 ### Frontend
-- `frontend/streamlit/pages/quiz.py` - Quiz interativo
-- `frontend/streamlit/components/question_card.py` - Question component (MC=radio, SA/Calc=text)
+
+- `frontend/app/pages/quiz.py` - Quiz interativo
+- `frontend/app/components/question_card.py` - Question component (MC=radio, SA/Calc=text)
 
 ### Testes
+
 - `tests/test_quiz_service.py` - Avaliação MC (determinística), SA/Calc (LLM)
 - `tests/test_answer_evaluator.py` - LLM evaluator
 
 ### Critérios de Aceitação
+
 - Quiz flow funciona, score calculado corretamente
 - MC avaliada deterministicamente, SA/Calc por LLM
 - Session management funciona, auto-save
@@ -286,20 +309,24 @@ networks:
 **Objetivo:** Analisar prontidão e detectar gaps de conhecimento.
 
 ### Backend
+
 - `backend/domain/models/readiness.py` - ReadinessResult, GapAnalysis, ReadinessLevel (Ready/Needs Review/Not Ready)
 - `backend/services/gap_detection_service.py` - analyze_gaps, scoring (Critical=3x, Important=2x, Helpful=1x)
 - `backend/api/routes/readiness.py` - POST /analyze, GET /{session_id}, GET /{session_id}/gaps
 
 ### Frontend
-- `frontend/streamlit/pages/readiness.py` - Score (gauge), level visual, strengths/gaps lists
-- `frontend/streamlit/components/readiness_card.py` - Score card
-- `frontend/streamlit/components/gaps_list.py` - Gaps visualization
+
+- `frontend/app/pages/readiness.py` - Score (gauge), level visual, strengths/gaps lists
+- `frontend/app/components/readiness_card.py` - Score card
+- `frontend/app/components/gaps_list.py` - Gaps visualization
 
 ### Testes
+
 - `tests/test_gap_detection_service.py` - Scoring, strengths/gaps identification
 - `tests/fixtures/readiness_fixtures.py` - Mock results
 
 ### Critérios de Aceitação
+
 - Score calculado com pesos corretos
 - Strengths/gaps identificados, level determinado
 - Gaps priorizados por severidade
@@ -311,6 +338,7 @@ networks:
 **Objetivo:** Gerar conteúdo de nivelamento personalizado para cada gap.
 
 ### Backend
+
 - `backend/domain/models/leveling.py" - GapExplanation, LevelingPlan (Pydantic)
 - `backend/services/leveling_service.py` - generate_leveling_content, create_study_order
 - `backend/llm/prompts/leveling_generator_v1.txt` - Leveling prompt
@@ -319,15 +347,18 @@ networks:
 - `backend/api/routes/leveling.py` - POST /generate, GET /plan/{plan_id}
 
 ### Frontend
-- `frontend/streamlit/pages/leveling.py` - Explicações ordenadas, study timeline
-- `frontend/streamlit/components/gap_explanation.py` - Explanation card (why, explanation, example, exercise)
-- `frontend/streamlit/components/study_plan.py` - Study timeline
+
+- `frontend/app/pages/leveling.py` - Explicações ordenadas, study timeline
+- `frontend/app/components/gap_explanation.py` - Explanation card (why, explanation, example, exercise)
+- `frontend/app/components/study_plan.py` - Study timeline
 
 ### Testes
+
 - `tests/test_leveling_service.py` - Geração com mock LLM
 - `tests/fixtures/leveling_fixtures.py` - Mock content
 
 ### Critérios de Aceitação
+
 - Explicações geradas para cada gap
 - Study order correto, cache/fallback funcionam
 
@@ -338,20 +369,24 @@ networks:
 **Objetivo:** Workflow end-to-end orquestrado com LangGraph.
 
 ### Backend
+
 - `backend/workflows/readiness_graph.py` - LangGraph StateGraph com nodes (extract, assess, evaluate, detect, level)
 - `backend/workflows/states.py` - Workflow state models
 - `backend/services/workflow_service.py` - execute_workflow, resume, cancellation
 - `backend/api/routes/workflow.py` - POST /execute, GET /{workflow_id}, POST /resume, DELETE
 
 ### Frontend
-- `frontend/streamlit/pages/workflow.py` - Upload + trigger, status em tempo real
-- `frontend/streamlit/components/workflow_status.py` - Status visualization
-- `frontend/streamlit/components/workflow_progress.py` - Progress tracker
+
+- `frontend/app/pages/workflow.py` - Upload + trigger, status em tempo real
+- `frontend/app/components/workflow_status.py` - Status visualization
+- `frontend/app/components/workflow_progress.py` - Progress tracker
 
 ### Testes
+
 - `tests/test_workflow.py` - E2E integration, checkpointing, resume, cancellation
 
 ### Critérios de Aceitação
+
 - Workflow executa end-to-end
 - State persistido, checkpointing/resume funcionam
 - Status atualizado em tempo real
@@ -363,6 +398,7 @@ networks:
 **Objetivo:** Projeto production-ready com testes abrangentes.
 
 ### Backend
+
 - `tests/integration/test_full_workflow.py` - E2E tests
 - `tests/evasion/test_llm_evasion.py` - Security tests
 - `backend/infrastructure/resilience/circuit_breaker.py` - Circuit breaker (Groq, DB, Valkey)
@@ -371,16 +407,19 @@ networks:
 - `docs/ARCHITECTURE.md` - Architecture details
 
 ### Frontend
-- `frontend/streamlit/theme.py` - Theme consistente
-- `frontend/streamlit/components/loading.py` - Custom loading states
+
+- `frontend/app/theme.py` - Theme consistente
+- `frontend/app/components/loading.py` - Custom loading states
 - `docs/USER_GUIDE.md` - User guide
-- `frontend/streamlit/pages/help.py` - Help page
+- `frontend/app/pages/help.py` - Help page
 
 ### Testes
+
 - `tests/security/test_security.py` - Injection, XSS
 - `tests/performance/test_load.py` - 100 concurrent requests
 
 ### Critérios de Aceitação
+
 - Coverage > 80%, todos testes passam
 - p95 latency < 5s para workflow
 - Circuit breaker e rate limiting funcionam
@@ -444,6 +483,7 @@ networks:
 ```
 
 **Vantagens desta arquitetura:**
+
 - **Containers Dedicados**: S3 (Minio) + PostgreSQL + Valkey em containers independentes.
 - PDFs no S3: escalável, custo menor, não polui o DB.
 - PostgreSQL leve: apenas metadados relacionais.
@@ -452,6 +492,7 @@ networks:
 - Deploy isolado: portas exclusivas para evitar conflitos locais.
 
 **Configuração Local:**
+
 - S3 endpoint: `http://localhost:9005`
 - PostgreSQL: `localhost:5435`
 - Valkey: `localhost:6385`
@@ -508,6 +549,7 @@ networks:
 ```
 
 **Vantagens desta arquitetura:**
+
 - **Provider Independence**: Troca Groq → OpenAI via LLM_PROVIDER=... (sem mudar código)
 - **Dependency Injection**: Serviços dependem de ILLMProvider, não de implementações concretas
 - **Testabilidade**: MockProvider permite testes sem chamadas reais
@@ -515,6 +557,7 @@ networks:
 - **Configuração Centralizada**: LLM_CONFIG via environment variables
 
 **Interface ILLMProvider:**
+
 ```python
 class ILLMProvider(ABC):
     @abstractmethod
@@ -528,6 +571,7 @@ class ILLMProvider(ABC):
 ```
 
 **Configuração:**
+
 ```bash
 LLM_PROVIDER=groq|openai|anthropic|mock
 GROQ_API_KEY=xxx
@@ -538,6 +582,7 @@ LLM_FALLBACK_MODEL=deepseek-r1
 ```
 
 **Uso em Serviços:**
+
 ```python
 class PrerequisiteService:
     def __init__(
@@ -580,6 +625,7 @@ Personalized Study Plan
 ## Arquivos Críticos por Fase
 
 **Fase 1:**
+
 - `docker-compose.yml` - Postgres + Valkey + Minio
 - `pyproject.toml" - Dependências (incluindo redis-py para Valkey)
 - `backend/main.py` - FastAPI entry point
@@ -589,21 +635,25 @@ Personalized Study Plan
 - `backend/infrastructure/storage.py` - S3 (Minio)
 
 **Fase 2:**
+
 - `backend/domain/models/pdf.py` - PDF model
 - `backend/services/pdf_service.py` - PDF processing
 - `backend/infrastructure/storage/pdf_storage.py` - S3 operations
 - `backend/api/routes/pdf.py` - Upload endpoint
 
 **Fase 3:**
+
 - `backend/domain/models/prerequisite.py` - Prerequisite models
 - `backend/llm/providers/groq_provider.py` - Groq integration
 - `backend/llm/prompts/prerequisite_extractor_v1.txt` - Prompt
 
 **Fase 8:**
+
 - `backend/workflows/readiness_graph.py` - LangGraph workflow
 - `backend/workflows/states.py` - State models
 
 **Fase 9:**
+
 - `tests/integration/test_full_workflow.py` - E2E tests
 - `docs/API.md` - API documentation
 - `docs/USER_GUIDE.md` - User guide

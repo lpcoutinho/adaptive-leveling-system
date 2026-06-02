@@ -7,6 +7,7 @@ Este plano implementa a **Fase 1** do Adaptive Leveling System: Fundação e Inf
 **Objetivo:** Estabelecer toda a fundação técnica com infraestruturas críticas configuradas e testadas.
 
 **Stack:**
+
 - Python 3.12 com Poetry/pip
 - FastAPI (backend API)
 - Streamlit (frontend)
@@ -22,9 +23,13 @@ Este plano implementa a **Fase 1** do Adaptive Leveling System: Fundação e Inf
 ```
 adaptive-leveling-system/
 ├── pyproject.toml                    # Dependências
+├── poetry.lock                       # Lock file
 ├── docker-compose.yml                # Containers
 ├── .env.example                      # Exemplo de env vars
 ├── .gitignore                        # (já criado)
+├── .pre-commit-config.yaml          # Pre-commit hooks
+├── Makefile                          # Comandos de desenvolvimento
+├── .github/workflows/ci.yml          # CI/CD pipeline
 │
 ├── backend/
 │   ├── __init__.py
@@ -70,7 +75,7 @@ adaptive-leveling-system/
 │   └── 001_initial_schema.sql
 │
 ├── frontend/
-│   └── streamlit/
+│   └── app/                          # Renomeado de 'streamlit' para evitar conflitos
 │       ├── __init__.py
 │       ├── app.py                    # Main app
 │       ├── config.py                 # Frontend config
@@ -78,11 +83,20 @@ adaptive-leveling-system/
 │           ├── __init__.py
 │           └── health.py              # Health page
 │
-└── tests/
-    ├── __init__.py
-    ├── conftest.py                   # Fixtures
-    ├── test_infrastructure.py        # DB, cache, storage
-    └── test_api_health.py            # Health endpoints
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py                   # Fixtures
+│   ├── test_infrastructure.py        # Infraestrutura geral
+│   ├── test_database_connection.py   # Testes específicos de DB
+│   ├── test_cache_connection.py      # Testes específicos de Cache
+│   ├── test_storage_connection.py    # Testes específicos de S3
+│   ├── test_llm_interface.py         # Testes da interface LLM
+│   └── test_api_health.py            # Health endpoints
+│
+└── docs/
+    └── defense/                      # Documentação de defesa técnica
+        ├── README.md
+        └── fase_1_fundacao.md
 ```
 
 ---
@@ -92,11 +106,13 @@ adaptive-leveling-system/
 ### Tarefa 1: Configuração Inicial
 
 **Arquivos:**
+
 - `pyproject.toml` - Dependências completas
 - `.env.example` - Template de environment variables
 - `docker-compose.yml` - Infrastructure configuration (Postgres, Valkey, Minio)
 
 **Dependências do pyproject.toml:**
+
 ```toml
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -127,6 +143,7 @@ pytest-cov = "^6.0.0"
 ### Tarefa 2: LLM Abstraction Layer
 
 **Arquivos:**
+
 1. `backend/llm/base/interface.py` - Interface ILLMProvider
 2. `backend/llm/config.py` - LLMConfig (pydantic-settings)
 3. `backend/llm/factory.py` - Provider factory
@@ -135,6 +152,7 @@ pytest-cov = "^6.0.0"
 6. `backend/api/dependencies/llm.py` - FastAPI dependencies
 
 **Interface ILLMProvider:**
+
 ```python
 class ILLMProvider(ABC):
     @abstractmethod
@@ -152,9 +170,11 @@ class ILLMProvider(ABC):
 ### Tarefa 3: Configuração Centralizada
 
 **Arquivos:**
+
 1. `backend/config.py` - Settings (pydantic-settings)
 
 **Configurações:**
+
 ```python
 class Settings(BaseSettings):
     # App
@@ -192,11 +212,13 @@ class Settings(BaseSettings):
 ### Tarefa 4: Infraestrutura de Telemetria
 
 **Arquivos:**
+
 1. `backend/infrastructure/telemetry/tracer.py` - OpenTelemetry setup
 2. `backend/infrastructure/telemetry/metrics.py` - Custom metrics
 3. `backend/infrastructure/telemetry/logger.py` - Loguru wrapper
 
 **Tracer:**
+
 ```python
 def setup_telemetry(service_name: str) -> None:
     # Configure OpenTelemetry with OTLP exporter
@@ -208,12 +230,14 @@ def setup_telemetry(service_name: str) -> None:
 ### Tarefa 5: Infraestrutura de Dados
 
 **Arquivos:**
+
 1. `backend/infrastructure/database.py` - PostgreSQL connection pool
 2. `backend/infrastructure/cache.py" - Valkey client com serialization
 3. `backend/infrastructure/storage.py` - S3 client (Minio) com presigned URLs
 4. `migrations/001_initial_schema.sql` - Schema inicial
 
 **Schema SQL:**
+
 ```sql
 CREATE TABLE IF NOT EXISTS pdf_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -232,11 +256,13 @@ CREATE INDEX idx_pdf_documents_hash ON pdf_documents(hash);
 ### Tarefa 6: FastAPI Application
 
 **Arquivos:**
+
 1. `backend/main.py` - App factory com middleware
 2. `backend/api/routes/health.py` - Health check endpoint
 3. `backend/infrastructure/security.py` - Input validation, rate limiting
 
 **main.py:**
+
 ```python
 def create_app() -> FastAPI:
     app = FastAPI(title="Adaptive Leveling System")
@@ -252,11 +278,13 @@ def create_app() -> FastAPI:
 ### Tarefa 7: Frontend Streamlit
 
 **Arquivos:**
-1. `frontend/streamlit/app.py` - Main app com sidebar
-2. `frontend/streamlit/config.py` - Frontend config
-3. `frontend/streamlit/pages/health.py` - Health status page
+
+1. `frontend/app/app.py` - Main app com sidebar
+2. `frontend/app/config.py` - Frontend config
+3. `frontend/app/pages/health.py` - Health status page
 
 **app.py:**
+
 ```python
 def main():
     st.set_page_config(page_title="Adaptive Leveling System")
@@ -269,11 +297,13 @@ def main():
 ### Tarefa 8: Testes de Infraestrutura
 
 **Arquivos:**
+
 1. `tests/conftest.py` - Fixtures para DB, cache, HTTP client
 2. `tests/test_infrastructure.py` - Testes de conexão
 3. `tests/test_api_health.py` - Testes de health endpoint
 
 **conftest.py:**
+
 ```python
 @pytest.fixture
 async def db_connection():
@@ -301,26 +331,99 @@ async def http_client():
 6. **FastAPI** (1h): main.py, health.py
 7. **Frontend** (1h): Streamlit app + health page
 8. **Tests** (1h): conftest, test_infrastructure, test_api_health
-9. **Integration** (30min): docker-compose up, test end-to-end
+9. **Quality** (1h): Pre-commit, Makefile, CI/CD, Type Checking
+10. **Integration** (30min): docker-compose up, test end-to-end
 
-**Total estimado:** ~8-9 horas
+**Total estimado:** ~9-10 horas
+
+---
+
+## Ferramentas de Desenvolvimento
+
+### Makefile
+
+Comandos essenciais para desenvolvimento:
+
+```bash
+make help          # Lista todos os comandos
+make setup         # Setup completo (install + up + migrate + pre-commit)
+make up            # Sobe containers
+make down          # Para containers
+make test          # Executa testes
+make check         # Lint + type-check
+make backend       # Inicia backend
+make frontend      # Inicia frontend
+make health        # Verifica saúde dos serviços
+```
+
+### Pre-commit Hooks
+
+Verificações automáticas antes de cada commit:
+
+- Ruff (linting + formatting)
+- MyPy (type checking)
+- Bandit (security)
+- Markdown lint
+
+Instalação:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+### CI/CD (GitHub Actions)
+
+Pipeline automatizado que executa:
+
+1. **Lint Job**: Ruff check + format verification
+2. **Type-check Job**: MyPy com Pydantic plugins
+3. **Test Job**: Sobe infraestrutura, executa migrations, roda testes com coverage
 
 ---
 
 ## Critérios de Aceitação
 
-- [ ] Backend inicia sem erros (`uvicorn backend.main:app`)
-- [ ] Health check retorna 200 (`GET /health`)
-- [ ] Containers (S3, DB, Cache) conectam
-- [ ] Traces visíveis no console (OpenTelemetry)
-- [ ] Frontend Streamlit inicia e mostra status
-- [ ] Upload/download no Minio funciona
-- [ ] Valkey cache operations funcionam
-- [ ] Todos os testes passam
+- [x] Backend inicia sem erros (`uvicorn backend.main:app`)
+- [x] Health check retorna 200 (`GET /health`)
+- [x] Containers (S3, DB, Cache) conectam
+- [x] Traces visíveis no console (OpenTelemetry)
+- [x] Frontend Streamlit inicia e mostra status
+- [x] Upload/download no Minio funciona
+- [x] Valkey cache operations funcionam
+- [x] Todos os testes passam
+- [x] Pre-commit hooks configurados
+- [x] CI/CD pipeline funcionando
+- [x] MyPy type checking passando
+- [x] 81% de cobertura de testes
+
+**Status: FASE 1 COMPLETA ✅**
 
 ---
 
 ## Verificação Final
+
+### Via Makefile (Recomendado)
+
+```bash
+# Setup completo
+make setup
+
+# Verificar saúde dos serviços
+make health
+
+# Executar testes com coverage
+make test-cov
+
+# Verificar código
+make check
+
+# Iniciar aplicações
+make backend    # Terminal 1
+make frontend   # Terminal 2
+```
+
+### Manualmente
 
 ```bash
 # 1. Iniciar containers
@@ -329,27 +432,30 @@ docker-compose up -d
 # 2. Instalar dependências
 poetry install
 
-# 3. Configurar environment
+# 3. Configurar pre-commit
+pre-commit install
+
+# 4. Configurar environment
 cp .env.example .env
 # Editar .env com chaves API
 
-# 4. Rodar migrations (porta 5435)
-psql -h 127.0.0.1 -p 5435 -U postgres -d postgres -f migrations/001_initial_schema.sql
+# 5. Rodar migrations (porta 5435)
+make migrate
 
-# 5. Iniciar backend
+# 6. Iniciar backend
 LLM_PROVIDER=mock uvicorn backend.main:app --reload
 
-# 6. Testar health
+# 7. Testar health
 curl http://localhost:8000/health
 
-# 7. Acessar Traces (Jaeger)
+# 8. Acessar Traces (Jaeger)
 # Abra no navegador: http://localhost:16686
 
-# 8. Iniciar frontend
-streamlit run frontend/streamlit/app.py
+# 9. Iniciar frontend
+streamlit run frontend/app/app.py
 
-# 9. Rodar testes
-pytest tests/ -v
+# 10. Rodar testes
+pytest tests/ -v --cov=backend
 ```
 
 ---
@@ -357,10 +463,12 @@ pytest tests/ -v
 ## Arquivos Críticos
 
 **Infraestrutura:**
+
 - `docker-compose.yml` - Postgres + Valkey + Minio
 - `pyproject.toml` - Dependências
 
 **LLM Abstraction:**
+
 - `backend/llm/base/interface.py` - Interface ILLMProvider
 - `backend/llm/config.py` - LLMConfig
 - `backend/llm/factory.py` - Provider factory
@@ -368,6 +476,7 @@ pytest tests/ -v
 - `backend/api/dependencies/llm.py` - FastAPI DI
 
 **Core:**
+
 - `backend/config.py` - Settings
 - `backend/main.py` - FastAPI app
 - `backend/infrastructure/database.py` - PostgreSQL
@@ -375,10 +484,12 @@ pytest tests/ -v
 - `backend/infrastructure/storage.py` - S3 (Minio)
 
 **Telemetria:**
+
 - `backend/infrastructure/telemetry/tracer.py` - OpenTelemetry
 - `backend/infrastructure/telemetry/logger.py` - Loguru
 
 **Testes:**
+
 - `tests/conftest.py` - Fixtures
 - `tests/test_infrastructure.py` - DB, cache, storage
 - `tests/test_api_health.py` - Health endpoint
