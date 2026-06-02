@@ -1,29 +1,95 @@
+# Configuração de infraestrutura local para o Adaptive Leveling System
 services:
-  floci:
-    image: floci/floci:latest
-    container_name: als-floci
+  # Banco de dados PostgreSQL para metadados e persistência
+  db:
+    image: postgres:16-alpine
+    container_name: als-db
     ports:
-      - "4567:4566"  # S3 API
-      - "5434:5432"  # PostgreSQL
-      - "6380:6379"  # Valkey (ElastiCache)
+      - "5435:5432" # Mapeia porta local 5435 para evitar conflitos
     environment:
-      SERVICES: s3,rds,elasticache,cloudwatch,logs
-      ELASTICACHE_REDIS_ENGINE: valkey
-      DEBUG: 1
-      DATA_DIR: /tmp/localstack_data
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - floci_data:/tmp/localstack_data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 30s
+    networks:
+      - als
 
+  # Cache Valkey para resultados de processamento e LLM
+  cache:
+    image: valkey/valkey:8
+    container_name: als-cache
+    ports:
+      - "6385:6379" # Mapeia porta local 6385 para evitar conflitos
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - als
+
+  # Armazenamento de objetos compatível com S3 (Minio)
+  s3:
+    image: minio/minio
+    container_name: als-s3
+    ports:
+      - "9005:9000" # API S3
+      - "9006:9001" # Console Administrativo
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - als
+
+  # Inicialização automática de recursos do S3 (buckets e permissões)
+  create-buckets:
+    image: minio/mc
+    container_name: als-init-s3
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://s3:9000 minioadmin minioadmin;
+      /usr/bin/mc mb local/als-documents;
+      /usr/bin/mc policy set public local/als-documents;
+      exit 0;
+      "
+    networks:
+      - als
+
+  # Observabilidade com Jaeger (Tracing)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: als-jaeger
+    ports:
+      - "16686:16686" # Interface Web (UI)
+      - "4318:4318"   # OTLP HTTP receiver
+    networks:
+      - als
+
+# Volumes persistentes para dados
 volumes:
-  floci_data:
+  postgres_data:
     driver: local
+  minio_data:
+    driver: local
+
+# Rede isolada para comunicação entre containers
+networks:
+  als:
+    driver: bridge
