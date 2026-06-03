@@ -55,7 +55,7 @@ async def test_extract_prerequisites_success(mock_pdf_doc, mock_knowledge_graph)
         patch(
             "backend.services.prerequisite_service.get_pdf_by_id", new_callable=AsyncMock
         ) as mock_get_pdf,
-        patch("backend.services.prerequisite_service.get_llm_provider") as mock_llm_factory,
+        patch("backend.services.prerequisite_service.LLMFactory.get_provider") as mock_llm_factory,
         patch(
             "backend.services.prerequisite_service.save_knowledge_graph", new_callable=AsyncMock
         ) as mock_save,

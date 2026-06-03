@@ -3,13 +3,13 @@
 import os
 from uuid import UUID
 
-from backend.api.dependencies.llm import get_llm_provider
 from backend.domain.models.prerequisite import KnowledgeGraph
 from backend.infrastructure.repository.pdf_repository import get_pdf_by_id
 from backend.infrastructure.repository.prerequisite_repository import (
     get_knowledge_graph_by_pdf_id,
     save_knowledge_graph,
 )
+from backend.llm.factory import LLMFactory
 
 
 def _load_prompt_template() -> str:
@@ -46,7 +46,7 @@ async def extract_prerequisites(pdf_id: UUID) -> KnowledgeGraph:
     prompt = template.replace("{{content_text}}", pdf_doc.content_text)
 
     # 4. Chama o LLM (via Camada de Abstração)
-    llm = get_llm_provider()
+    llm = LLMFactory.get_provider()
 
     # generate_structured espera o prompt e a classe Pydantic (response_model)
     # Nota: KnowledgeGraph no domínio tem UUIDModel e TimestampModel,

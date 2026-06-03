@@ -36,6 +36,14 @@ REGRAS CRÍTICAS:
 - Não invente conceitos que não podem ser inferidos do texto.
 - Seja específico nos tópicos dos pré-requisitos (ex: em vez de 'Álgebra', use 'Fatoração de Polinômios').
 
+AUTO-VERIFICAÇÃO (SELF-CORRECTION):
+Antes de finalizar, revise seu JSON contra estas regras:
+1. Cada pré-requisito possui importância (Critical/Important/Helpful)?
+2. Os conceitos principais têm ao menos um pré-requisito associado?
+3. As descrições são específicas e relacionadas ao texto da aula?
+4. Nenhum campo está vazio ou com placeholders?
+Se algo violar, corrija antes de responder.
+
 TEXTO DA AULA PARA ANÁLISE:
 ---
 {{content_text}}
