@@ -7,7 +7,7 @@ class LLMSettings(BaseSettings):
     """Configurações de LLM via environment variables."""
 
     llm_provider: str = "mock"
-    llm_primary_model: str = "llama-3.3-70b"
+    llm_primary_model: str = "llama-3.3-70b-versatile"
     llm_fallback_model: str = "deepseek-r1"
 
     # API Keys

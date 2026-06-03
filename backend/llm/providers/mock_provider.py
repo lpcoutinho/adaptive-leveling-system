@@ -13,7 +13,7 @@ class MockProvider(ILLMProvider):
     """Provider de mock para testes e desenvolvimento offline."""
 
     def __init__(self):
-        self._responses = {}
+        self._responses: dict[str, Any] = {}
 
     def set_response(self, prompt_part: str, response: Any):
         """Define uma resposta para um trecho de prompt."""
@@ -27,8 +27,13 @@ class MockProvider(ILLMProvider):
                     return resp
                 return response_model.model_validate(resp)
 
-        # Resposta padrão se não houver match
-        return response_model.model_construct()
+        # Se não houver match, tenta criar uma instância válida com campos obrigatórios vazios
+        # Isso evita erros de 'NoneType' ao acessar listas no serviço
+        try:
+            return response_model()
+        except Exception:
+            # Fallback para construct se o init falhar (menos seguro)
+            return response_model.model_construct()
 
     async def generate_text(self, prompt: str) -> str:
         """Retorna um texto de mock."""

@@ -27,3 +27,20 @@ class LLMFactory:
             return MockProvider()
         else:
             raise ValueError(f"Provider de LLM desconhecido: {provider_name}")
+
+    @staticmethod
+    def is_configured() -> bool:
+        """
+        Verifica se o provider atual possui as credenciais necessárias.
+
+        Returns:
+            bool: True se configurado corretamente.
+        """
+        provider_name = _settings.llm_provider.lower()
+
+        if provider_name == "mock":
+            return True
+        if provider_name == "groq":
+            return bool(_settings.groq_api_key and len(_settings.groq_api_key) > 10)
+
+        return False
