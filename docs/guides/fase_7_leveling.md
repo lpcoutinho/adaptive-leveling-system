@@ -135,3 +135,47 @@ tests/
 2. **Conexão com Cálculo I:** Exemplos usam contextos de limites/derivadas para motivar o aluno ("você precisa disso para entender...").
 3. **Ordenação Topológica:** Usa o grafo de conhecimento para determinar a ordem de estudo (base → derivado).
 4. **Fallback Texto:** Se LLM falha, um template genérico é usado para não deixar o gap sem conteúdo.
+
+---
+
+## Status da Implementação (Junho/2026)
+
+### Estrutura de Arquivos
+
+| Arquivo | Status | Observação |
+|---------|--------|------------|
+| `backend/domain/models/leveling.py` | ✅ | GapExplanation, StudyStep, LevelingPlan |
+| `backend/llm/prompts/leveling_generator_v1.txt` | ✅ | Prompt WEEE com contexto de Cálculo I |
+| `backend/services/leveling_service.py` | ✅ | generate_leveling_plan com LLM + fallback |
+| `backend/infrastructure/repository/leveling_repository.py` | ✅ | save, get, get_by_readiness com upsert |
+| `backend/api/routes/leveling.py` | ✅ | POST /generate, GET /plan/{plan_id} |
+| `backend/api/schemas/leveling.py` | ✅ | GapExplanationSchema, LevelingPlanResponse |
+| `migrations/006_leveling_schema.sql` | ✅ | Tabela leveling_plans com UNIQUE(readiness_id) |
+| `frontend/app/pages/7_📚_Leveling.py` | ✅ | Plano com cards WEEE e progresso |
+| `frontend/app/components/gap_explanation.py` | ❌ | **Embedded** na página 7 |
+| `frontend/app/components/study_plan.py` | ❌ | **Embedded** na página 7 |
+| `tests/test_leveling_service.py` | ✅ | 12 testes |
+| `tests/fixtures/leveling_fixtures.py` | ❌ | **Não criado** |
+
+### Critérios de Aceitação
+
+- [x] Conteúdo gerado para cada gap com estrutura WEEE (via LLM + fallback texto)
+- [x] Exemplos conectados a Cálculo I (prompt instrui conexão explícita)
+- [x] Plano de estudo ordenado por criticidade + score (Critical first, menor score primeiro)
+- [ ] Cache Valkey com TTL 7d — **não implementado** (apenas idempotência via banco)
+- [x] Fallback quando LLM falha (fallback texto explicativo)
+- [x] Cobertura de testes > 80% (12 testes no módulo)
+
+### Pendências
+
+- [ ] **Frontend usa dados mockados** — a página 7 gera explicações mockadas em vez de chamar a API `/api/v1/leveling/generate`. O backend suporta geração real via LLM.
+- [ ] **Ordenação topológica** — o plano de estudo ordena por importância + score, mas não usa dependências do grafo de conhecimento para ordenação topológica.
+- [ ] **Cache Valkey** — não implementado para leveling plans.
+- [ ] **Botão "Exportar Plano"** — mostra "disponível em breve" sem funcionalidade real.
+
+### Notas Técnicas
+
+- A service `generate_leveling_plan` aceita `session_id` + `readiness_id` para flexibilidade: busca por readiness_id primeiro, fallback para session_id.
+- O fallback do LLM gera um `GapExplanation` com texto genérico explicativo se a chamada LLM falhar.
+- O prompt `leveling_generator_v1.txt` usa estrutura WEEE (Why → Explanation → Example → Exercise) baseada em aprendizagem multimídia (Mayer).
+- O frontend permite marcar gaps como concluídos, com progresso salvo em `st.session_state`.
