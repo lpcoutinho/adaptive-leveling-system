@@ -40,6 +40,14 @@ security: ## Executa Bandit security scan
 pre-commit: ## Executa pre-commit em todos os arquivos
 	pre-commit run --all-files
 
+pre-commit-files: ## Executa pre-commit apenas nos arquivos estagiados (git add)
+	@STAGED_FILES=$$(git diff --name-only --cached); \
+	if [ -n "$$STAGED_FILES" ]; then \
+		pre-commit run --files $$STAGED_FILES; \
+	else \
+		echo "⚠️  Nenhum arquivo no staging. Use 'git add' primeiro."; \
+	fi
+
 pre-commit-update: ## Atualiza hooks pre-commit
 	pre-commit autoupdate
 
