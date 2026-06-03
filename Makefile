@@ -5,7 +5,7 @@
 
 # Variáveis
 POETRY := poetry
-DOCKER_COMPOSE := docker-compose
+DOCKER_COMPOSE := docker compose
 
 help: ## Mostra este help
 	@echo "Adaptive Leveling System - Comandos Disponíveis:"
@@ -94,19 +94,22 @@ frontend: ## Inicia frontend Streamlit
 	$(POETRY) run streamlit run frontend/app/app.py
 
 # Limpeza
-clean: ## Limpa arquivos gerados
+clean: ## Limpa arquivos de cache e temporários (Python, Pytest, MyPy, Ruff)
+	rm -rf .pytest_cache .ruff_cache .mypy_cache .coverage htmlcov .pre-commit-cache .pytest_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .ruff_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .mypy_cache -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
-	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name htmlcov -exec rm -rf {} + 2>/dev/null || true
-	@echo "🧹 Limpeza concluída"
+	find . -type f -name "*.pyo" -delete
+	find . -type f -name "*.pyd" -delete
+	find . -type f -name ".coverage.*" -delete
+	@echo "🧹 Limpeza de arquivos temporários concluída"
 
-clean-all: clean down ## Limpeza completa + para containers
-	docker system prune -f
-	@echo "🧹 Sistema limpo"
+clean-poetry: ## Limpa o ambiente virtual (Virtualenv) do Poetry
+	$(POETRY) env remove --all 2>/dev/null || true
+	@echo "🧹 Ambiente Virtual removido"
+
+clean-all: clean clean-poetry down ## Limpeza completa (arquivos + virtualenv + containers)
+	docker system prune -f --volumes
+	@echo "🧹 Todo o sistema foi limpo (incluindo volumes docker)"
 
 # Diagnóstico
 health: ## Verifica saúde dos serviços

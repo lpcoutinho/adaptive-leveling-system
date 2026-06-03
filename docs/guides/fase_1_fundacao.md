@@ -354,6 +354,9 @@ make check         # Lint + type-check
 make backend       # Inicia backend
 make frontend      # Inicia frontend
 make health        # Verifica saúde dos serviços
+make clean         # Limpa caches e arquivos temporários
+make clean-poetry  # Remove o virtualenv do Poetry
+make clean-all     # Limpeza total (arquivos + venv + docker volumes)
 ```
 
 ### Pre-commit Hooks
