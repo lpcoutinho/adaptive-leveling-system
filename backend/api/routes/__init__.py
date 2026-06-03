@@ -1,1 +1,8 @@
-from backend.api.routes import assessment, health, pdf, prerequisites, quiz  # noqa: F401
+from backend.api.routes import (  # noqa: F401
+    assessment,
+    health,
+    pdf,
+    prerequisites,
+    quiz,
+    readiness,
+)

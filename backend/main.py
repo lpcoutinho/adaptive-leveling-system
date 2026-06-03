@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import assessment, health, pdf, prerequisites, quiz
+from backend.api.routes import assessment, health, pdf, prerequisites, quiz, readiness
 from backend.config import get_settings
 from backend.infrastructure.telemetry.logger import setup_logger
 from backend.infrastructure.telemetry.tracer import setup_telemetry
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(prerequisites.router, prefix="/api/v1")
     app.include_router(assessment.router, prefix="/api/v1")
     app.include_router(quiz.router, prefix="/api/v1")
+    app.include_router(readiness.router, prefix="/api/v1")
 
     @app.get("/")
     async def root():
