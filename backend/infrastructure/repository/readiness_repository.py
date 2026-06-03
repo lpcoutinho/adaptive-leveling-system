@@ -46,20 +46,21 @@ async def save_readiness_result(result: ReadinessResult) -> ReadinessResult:
     return result
 
 
-async def get_readiness_by_session(session_id: UUID) -> ReadinessResult | None:
-    query = "SELECT * FROM readiness_results WHERE session_id = $1"
-    result = await execute_query(query, session_id)
+async def get_readiness_by_id(result_id: UUID) -> ReadinessResult | None:
+    query = "SELECT * FROM readiness_results WHERE id = $1"
+    result = await execute_query(query, result_id)
     if not result:
         return None
+    return _row_to_result(result[0])
 
-    row = result[0]
+
+def _row_to_result(row: dict) -> ReadinessResult:
     gaps_data = row["gaps"]
     if isinstance(gaps_data, str):
         gaps_data = json.loads(gaps_data)
     strengths_data = row["strengths"]
     if isinstance(strengths_data, str):
         strengths_data = json.loads(strengths_data)
-
     return ReadinessResult(
         id=row["id"],
         session_id=row["session_id"],
@@ -74,3 +75,12 @@ async def get_readiness_by_session(session_id: UUID) -> ReadinessResult | None:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+async def get_readiness_by_session(session_id: UUID) -> ReadinessResult | None:
+    query = "SELECT * FROM readiness_results WHERE session_id = $1"
+    result = await execute_query(query, session_id)
+    if not result:
+        return None
+
+    return _row_to_result(result[0])
