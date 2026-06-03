@@ -1187,14 +1187,14 @@ files = [
 
 [[package]]
 name = "httpx"
-version = "0.28.1"
+version = "0.27.2"
 description = "The next generation HTTP client."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"},
-    {file = "httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc"},
+    {file = "httpx-0.27.2-py3-none-any.whl", hash = "sha256:7bb2708e112d8fdd7829cd4243970f0c223274051cb35ee80c03301ee29a3df0"},
+    {file = "httpx-0.27.2.tar.gz", hash = "sha256:f7c2be1d2f3c3c3160d441802406b206c2b76f5947b11115e6df10c6c65e66c2"},
 ]
 
 [package.dependencies]
@@ -1202,6 +1202,7 @@ anyio = "*"
 certifi = "*"
 httpcore = "==1.*"
 idna = "*"
+sniffio = "*"
 
 [package.extras]
 brotli = ["brotli ; platform_python_implementation == \"CPython\"", "brotlicffi ; platform_python_implementation != \"CPython\""]
@@ -1274,18 +1275,6 @@ groups = ["dev", "test"]
 files = [
     {file = "iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"},
     {file = "iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730"},
-]
-
-[[package]]
-name = "invoke"
-version = "2.2.1"
-description = "Pythonic task execution"
-optional = false
-python-versions = ">=3.6"
-groups = ["main"]
-files = [
-    {file = "invoke-2.2.1-py3-none-any.whl", hash = "sha256:2413bc441b376e5cd3f55bb5d364f973ad8bdd7bf87e53c79de3c11bf3feecc8"},
-    {file = "invoke-2.2.1.tar.gz", hash = "sha256:515bf49b4a48932b79b024590348da22f39c4942dff991ad1fb8b8baea1be707"},
 ]
 
 [[package]]
@@ -1463,6 +1452,21 @@ files = [
 
 [package.extras]
 schema = ["jsonschema (>=4.21) ; python_full_version < \"3.15.0a0\" or python_full_version >= \"3.15.0\"", "pydantic (>=2) ; python_full_version < \"3.15.0a0\" or python_full_version >= \"3.15.0\""]
+
+[[package]]
+name = "jsonpath-python"
+version = "1.1.6"
+description = "A lightweight and powerful JSONPath implementation for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "jsonpath_python-1.1.6-py3-none-any.whl", hash = "sha256:a1c50afd8d3fbbaf47a4873bc890dcb3c15da96f5c020327977d844d8731a2d4"},
+    {file = "jsonpath_python-1.1.6.tar.gz", hash = "sha256:dded9932b4ec41fb8726e09c83afa4e6be618f938c2db287cc2a81723c639671"},
+]
+
+[package.extras]
+dev = ["poethepoet", "pytest (>=8.0)", "pytest-benchmark[histogram] (>=4.0)", "pytest-cov (>=5.0)", "ruff (>=0.3)"]
 
 [[package]]
 name = "jsonschema"
@@ -1770,27 +1774,25 @@ files = [
 
 [[package]]
 name = "mistralai"
-version = "1.9.11"
+version = "1.5.2"
 description = "Python Client SDK for the Mistral AI API."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mistralai-1.9.11-py3-none-any.whl", hash = "sha256:7a3dc2b8ef3fceaa3582220234261b5c4e3e03a972563b07afa150e44a25a6d3"},
-    {file = "mistralai-1.9.11.tar.gz", hash = "sha256:3df9e403c31a756ec79e78df25ee73cea3eb15f86693773e16b16adaf59c9b8a"},
+    {file = "mistralai-1.5.2-py3-none-any.whl", hash = "sha256:5b1112acebbcad1afd7732ce0bd60614975b64999801c555c54768ac41f506ae"},
+    {file = "mistralai-1.5.2.tar.gz", hash = "sha256:f39e6e51e8939aac2602e4badcb18712cbee2df33d86100c559333e609b92d17"},
 ]
 
 [package.dependencies]
 eval-type-backport = ">=0.2.0"
-httpx = ">=0.28.1"
-invoke = ">=2.2.0,<3.0.0"
-pydantic = ">=2.10.3"
+httpx = ">=0.27.0"
+jsonpath-python = ">=1.0.6"
+pydantic = ">=2.9.0"
 python-dateutil = ">=2.8.2"
-pyyaml = ">=6.0.2,<7.0.0"
-typing-inspection = ">=0.4.0"
+typing-inspect = ">=0.9.0"
 
 [package.extras]
-agents = ["authlib (>=1.5.2,<2.0)", "griffe (>=1.7.3,<2.0)", "mcp (>=1.0,<2.0) ; python_version >= \"3.10\""]
 gcp = ["google-auth (>=2.27.0)", "requests (>=2.32.3)"]
 
 [[package]]
@@ -1870,7 +1872,7 @@ version = "1.1.0"
 description = "Type system extensions for programs checked with the mypy type checker."
 optional = false
 python-versions = ">=3.8"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "mypy_extensions-1.1.0-py3-none-any.whl", hash = "sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505"},
     {file = "mypy_extensions-1.1.0.tar.gz", hash = "sha256:52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558"},
@@ -3717,6 +3719,22 @@ files = [
 ]
 
 [[package]]
+name = "typing-inspect"
+version = "0.9.0"
+description = "Runtime inspection utilities for typing module."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "typing_inspect-0.9.0-py3-none-any.whl", hash = "sha256:9ee6fc59062311ef8547596ab6b955e1b8aa46242d854bfc78f4f6b0eff35f9f"},
+    {file = "typing_inspect-0.9.0.tar.gz", hash = "sha256:b23fc42ff6f6ef6954e4852c1fb512cdd18dbea03134f91f856a95ccc9461f78"},
+]
+
+[package.dependencies]
+mypy-extensions = ">=0.3.0"
+typing-extensions = ">=3.7.4"
+
+[[package]]
 name = "typing-inspection"
 version = "0.4.2"
 description = "Runtime typing introspection tools"
@@ -4236,4 +4254,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "57ba1ef141641ed3cdea4e1d7bd6170f18533a1b35df0f169618f1c5d347e0b1"
+content-hash = "0088e3f3781847bdca54997b647365962b499694ad0ad31f14168438f64cb5d9"
