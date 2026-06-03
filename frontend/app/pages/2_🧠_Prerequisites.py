@@ -48,31 +48,24 @@ def trigger_extraction(pdf_id: str):
         return None
 
 
-def show_prerequisites():
-    """Renderiza a interface de pré-requisitos."""
-    st.title("🧠 Inteligência da Aula")
-    st.write("Análise de conceitos principais e conhecimentos prévios necessários.")
+st.title("🧠 Inteligência da Aula")
+st.write("Análise de conceitos principais e conhecimentos prévios necessários.")
 
-    # Tenta recuperar o ID do PDF do estado da sessão (vindo do upload)
-    pdf_id = st.session_state.get("last_pdf_id")
+pdf_id = st.session_state.get("last_pdf_id")
 
-    if not pdf_id:
-        st.warning("⚠️ Nenhum PDF selecionado. Por favor, faça o upload de uma aula primeiro.")
-        if st.button("Ir para Upload"):
-            st.session_state.page = "Upload de Aula"
-            st.rerun()
-        return
-
+if not pdf_id:
+    st.warning("⚠️ Nenhum PDF selecionado. Por favor, faça o upload de uma aula primeiro.")
+    if st.button("Ir para Upload"):
+        st.switch_page("pages/1_📄_Upload.py")
+else:
     st.info(f"Analisando Documento ID: {pdf_id}")
 
-    # 1. Verifica se já existe análise
     graph = fetch_prerequisites(pdf_id)
     has_prerequisites = bool(graph and (graph.get("main_concepts") or graph.get("prerequisites")))
 
     if has_prerequisites:
         st.divider()
 
-        # Exibição de Conceitos Principais
         st.subheader("📚 Conceitos Abordados na Aula")
         for concept in graph["main_concepts"]:
             with st.expander(f"📌 {concept['name']}"):
@@ -82,10 +75,7 @@ def show_prerequisites():
 
         st.divider()
 
-        # Exibição de Pré-requisitos
         st.subheader("🛠️ O que você precisa saber antes")
-
-        # Agrupar por importância
         cols = st.columns(3)
         importance_levels = [
             ("Critical", "🔴 Críticos", cols[0]),
@@ -107,8 +97,8 @@ def show_prerequisites():
                             st.caption(f"Tópicos: {', '.join(item['topics'])}")
 
         st.divider()
-        if st.button("🎯 Próxima Etapa: Gerar Avaliação"):
-            st.info("Fase 4 em desenvolvimento.")
+        if st.button("🎯 Próxima Etapa: Gerar Avaliação", type="primary"):
+            st.switch_page("pages/3_📋_Assessment.py")
 
     else:
         st.write("Esta aula ainda não foi analisada pela IA.")
@@ -140,7 +130,3 @@ def show_prerequisites():
                 "⚠️ Provedor de IA não configurado. Verifique as credenciais "
                 "no arquivo `.env` e reinicie o servidor."
             )
-
-
-if __name__ == "__main__":
-    show_prerequisites()
