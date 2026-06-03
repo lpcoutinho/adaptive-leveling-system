@@ -134,3 +134,44 @@ tests/
 2. **Rubrica Estruturada:** Níveis discretos de acerto reduzem variabilidade do LLM e produzem scores consistentes.
 3. **Auto-Save em Cache:** Valkey com TTL 1h protege contra perda de sessão sem sobrecarregar o PostgreSQL.
 4. **Timer Não Bloqueante:** Apenas informativo para reduzir ansiedade, não trava o quiz.
+
+---
+
+## Status da Implementação (Junho/2026)
+
+### Estrutura de Arquivos
+
+| Arquivo | Status | Observação |
+|---------|--------|------------|
+| `backend/api/routes/quiz.py` | ✅ | POST /start, GET /{id}/next, POST /{id}/answer, POST /{id}/finish |
+| `backend/api/schemas/quiz.py` | ✅ | StartQuizRequest/Response, SubmitAnswerRequest/Response, FinishQuizResponse |
+| `backend/llm/evaluators/answer_evaluator.py` | ✅ | evaluate_mcq() deterministic, evaluate() LLM-as-a-Judge |
+| `backend/llm/prompts/answer_evaluator_v1.txt` | ✅ | Rubrica 0/25/50/75/100 com justificativa |
+| `backend/infrastructure/student_cache.py` | ✅ | Valkey TTL 1h (nota: em `infrastructure/`, não `infrastructure/cache/`) |
+| `backend/infrastructure/repository/student_repository.py` | ✅ | save_quiz_session, get_quiz_session com upsert |
+| `backend/services/quiz_service.py` | ✅ | start_quiz, get_next_question, submit_answer, finish_quiz |
+| `backend/domain/models/quiz.py` | ✅ | SessionStatus, QuizAnswer, QuizSession |
+| `migrations/004_quiz_schema.sql` | ✅ | Tabela quiz_sessions com JSONB answers |
+| `frontend/app/components/question_card.py` | ❌ | **Embedded** na página 5_🏁_Quiz.py |
+| `frontend/app/components/timer.py` | ❌ | **Não implementado** |
+| `frontend/app/pages/5_🏁_Quiz.py` | ✅ | Quiz interativo com progresso e score |
+| `tests/test_quiz_service.py` | ✅ | 4 testes (start, no questions, submit MCQ, finish) |
+| `tests/test_answer_evaluator.py` | ✅ | 5 testes (MC correct/wrong/case, prompt, model) |
+| `tests/fixtures/quiz_fixtures.py` | ❌ | **Não criado.** Mocks inline nos testes |
+
+### Critérios de Aceitação
+
+- [x] Quiz flow funcional (start → questions → answer → finish)
+- [x] MC corrigida deterministicamente (certa/errada, case-insensitive)
+- [x] SA/Calc corrigidas por LLM com score 0-100 e justificativa
+- [x] Auto-save a cada resposta (Valkey, TTL 1h)
+- [x] Dados persistidos ao finalizar (PostgreSQL)
+- [ ] Timer por questão — **não implementado**
+- [x] Cobertura de testes > 80% (módulo de avaliação)
+
+### Notas Técnicas
+
+- O `student_cache.py` ficou em `backend/infrastructure/student_cache.py` (não dentro de `cache/`) porque `backend/infrastructure/cache.py` (módulo) conflitaria com `backend/infrastructure/cache/` (pacote).
+- O timer por questão não foi implementado. A decisão técnica original mencionava timer "apenas informativo e não bloqueante", mas não chegou a ser codificado.
+- O componente `QuestionCard` (MC=radio, SA=textarea, Calc=textarea) foi implementado inline na página de quiz em vez de componente separado.
+- O frontend faz correção MC localmente (não chama API para SA/Calc). O backend suporta SA/Calc via LLM mas o frontend não está integrado a esse endpoint.

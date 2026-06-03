@@ -127,3 +127,44 @@ tests/
 2. **Threshold Duplo:** Gap < 60% e Strength ≥ 80% criam uma zona neutra (60-79%) onde o aluno tem conhecimento parcial mas precisa de revisão.
 3. **Ordenação por Dependência:** Gaps são ordenados considerando o grafo de conhecimento — conceitos base vêm antes dos derivados.
 4. **Feedback Positivo:** Destacar strengths mantém o engajamento e mostra ao aluno o que ele já domina.
+
+---
+
+## Status da Implementação (Junho/2026)
+
+### Estrutura de Arquivos
+
+| Arquivo | Status | Observação |
+|---------|--------|------------|
+| `backend/domain/models/readiness.py` | ✅ | ReadinessLevel, GapAnalysis, ReadinessResult |
+| `backend/services/gap_detection_service.py` | ✅ | analyze_gaps, scoring, thresholds, priorização |
+| `backend/infrastructure/repository/readiness_repository.py` | ✅ | save, get_by_session com upsert |
+| `backend/api/routes/readiness.py` | ✅ | POST /analyze, GET /{session_id} |
+| `backend/api/schemas/readiness.py` | ✅ | GapAnalysisSchema, ReadinessResponse, AnalyzeRequest |
+| `migrations/005_readiness_schema.sql` | ✅ | Tabela readiness_results com UNIQUE(session_id) |
+| `frontend/app/pages/6_🧠_Readiness.py` | ✅ | Dashboard com gauge, gaps e strengths |
+| `frontend/app/components/readiness_card.py` | ❌ | **Embedded** na página 6 |
+| `frontend/app/components/gaps_list.py` | ❌ | **Embedded** na página 6 |
+| `tests/test_gap_detection_service.py` | ✅ | 24 testes (scoring, classificação, gaps, priorização) |
+| `tests/fixtures/readiness_fixtures.py` | ❌ | **Não criado.** Mocks inline nos testes |
+
+### Critérios de Aceitação
+
+- [x] Score geral calculado com pesos corretos (Critical 3x, Important 2x, Helpful 1x)
+- [x] Classificação de prontidão correta (Ready ≥ 80%, Needs Review 50-79%, Not Ready < 50%)
+- [x] Gaps identificados (score < 60%) e priorizados por severidade (Critical first + menor score)
+- [x] Strengths identificados (score ≥ 80%) destacados positivamente
+- [x] Frontend exibe gauge, gaps e strengths visuais
+- [x] Cobertura de testes > 80% (24 testes, módulo mais testado)
+
+### Pendências
+
+- [ ] **Frontend usa dados mockados** — a página 6 exibe dados mockados ("analisar" gera dados falsos em vez de chamar a API `/api/v1/readiness/analyze`). O backend está completo e funcional.
+- [ ] **Ordenação por dependência** — os gaps são priorizados apenas por importância + score, sem considerar o grafo de dependências do knowledge graph (conceitos base antes de derivados).
+- [ ] **Cache Valkey** — o fluxo planejado mencionava cache em Valkey (TTL 7d), mas a implementação atual usa apenas PostgreSQL com idempotência via `UNIQUE(session_id)`.
+- [ ] **Botão "Ver Plano de Nivelamento"** — redireciona para "Fase 7 em breve!" em vez de conectar à Fase 7 (que será implementada em seguida).
+
+### Notas Técnicas
+
+- O mapeamento questão-para-pré-requisito usa o campo `topic` do `QuizQuestion` (que contém o nome do pré-requisito). A service `analyze_gaps` carrega o assessment para construir esse mapeamento.
+- A priorização de gaps usa peso de importância (Critical=3 > Important=2 > Helpful=1) + score ascendente. A ordenação por dependência do grafo de conhecimento não foi implementada porque a estrutura atual do `KnowledgeGraph` não expõe essas relações de forma direta.

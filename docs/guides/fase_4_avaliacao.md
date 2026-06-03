@@ -139,3 +139,42 @@ tests/
 2. **Few-Shot no Prompt:** Exemplos concretos melhoram a qualidade das questões geradas.
 3. **Validação Pós-Geração:** O serviço valida a distribuição real após o LLM responder; se desvio > 10%, regenera questões faltantes.
 4. **Testes com MockProvider:** Mock retorna questões pré-definidas para validar estrutura e distribuição.
+
+---
+
+## Status da Implementação (Junho/2026)
+
+### Estrutura de Arquivos
+
+| Arquivo | Status | Observação |
+|---------|--------|------------|
+| `backend/api/routes/assessment.py` | ✅ | POST /generate/{pdf_id}, GET /{id}, GET /pdf/{pdf_id} |
+| `backend/api/schemas/assessment.py` | ✅ | QuizQuestionSchema, AssessmentResponse |
+| `backend/domain/models/assessment.py` | ✅ | QuestionType, QuizQuestion, Assessment |
+| `backend/domain/models/student.py` | ❌ | **Não criado.** Student/StudentAnswer migrados para quiz.py |
+| `backend/infrastructure/cache/assessment_cache.py` | ❌ | **Não criado.** Apenas idempotência via banco (sem cache Valkey dedicado) |
+| `backend/infrastructure/repository/assessment_repository.py` | ✅ | save, get_by_pdf_id, get_by_id com upsert |
+| `backend/llm/prompts/assessment_generator_v1.txt` | ✅ | Prompt com 40/30/30 e self-correction |
+| `backend/services/assessment_service.py` | ✅ | generate_assessment com idempotência |
+| `frontend/app/components/quiz.py` | ✅ | render_quiz() e render_question() |
+| `frontend/app/pages/3_📋_Assessment.py` | ✅ | Métricas de tipo + botão "Iniciar Quiz" |
+| `tests/test_assessment_service.py` | ✅ | 4 testes (success, no prereqs, idempotency, prompt) |
+| `tests/test_assessment_routes.py` | ✅ | 3 testes (no prereqs 404, not found 404s) |
+| `tests/fixtures/assessment_fixtures.py` | ❌ | **Não criado.** Mocks inline nos testes |
+
+### Critérios de Aceitação
+
+- [x] Questões geradas com tipos corretos (MC, SA, Calc)
+- [ ] Distribuição balanceada (40% MC, 30% SA, 30% Calc) — *depende exclusivamente do prompt, sem validação server-side*
+- [ ] Cada pré-requisito tem ao menos 1 questão — *prompt pede 2 por pré-requisito, sem validação server-side*
+- [x] Idempotência via PostgreSQL (upsert por pdf_id)
+- [ ] Cache Valkey com TTL 7d — **não implementado**
+- [x] Frontend exibe avaliação com metadados
+- [x] Botão "Iniciar Quiz" navega para Fase 5
+
+### Notas Técnicas
+
+- O balanceamento 40/30/30 não é validado após a geração. O prompt instrui a distribuição mas não há verificação server-side de desvio > 10% conforme planejado nas decisões técnicas.
+- O cache Valkey dedicado (TTL 7d) não foi implementado. A idempotência funciona via `ON CONFLICT (pdf_id) DO UPDATE` no PostgreSQL.
+- O modelo `Student`/`StudentAnswer` planejado em `student.py` foi substituído pelos modelos de `quiz.py` (`QuizSession`, `QuizAnswer`).
+- A validação de schema do JSON retornado pelo LLM é feita pelo Pydantic (`generate_structured`).
