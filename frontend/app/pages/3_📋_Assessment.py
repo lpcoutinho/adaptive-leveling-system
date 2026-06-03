@@ -79,15 +79,18 @@ else:
         else:
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric(
-                    "Múltipla Escolha", sum(1 for q in questions if q["type"] == "multiple_choice")
-                )
+                mc = sum(1 for q in questions if q["type"] == "multiple_choice")
+                st.metric("Múltipla Escolha", mc)
             with col2:
-                st.metric(
-                    "Resposta Curta", sum(1 for q in questions if q["type"] == "short_answer")
-                )
+                sa = sum(1 for q in questions if q["type"] == "short_answer")
+                st.metric("Resposta Curta", sa)
             with col3:
                 calc = sum(1 for q in questions if q["type"] == "calculation")
-            st.metric("Cálculo", calc)
+                st.metric("Cálculo", calc)
+
+            st.divider()
+            if st.button("🏁 Iniciar Quiz", type="primary"):
+                st.session_state["current_assessment"] = assessment
+                st.switch_page("pages/5_🏁_Quiz.py")
 
             render_quiz(questions)

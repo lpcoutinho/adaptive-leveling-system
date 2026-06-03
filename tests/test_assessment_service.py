@@ -61,7 +61,7 @@ def mock_prerequisites():
                 "description": "Base necessária",
                 "importance": "Critical",
                 "topics": ["Regra da Cadeia"],
-                "model_dump": lambda: {"name": "Derivadas", "description": "Base necessária"},
+                "model_dump": lambda _self: {"name": "Derivadas", "description": "Base necessária"},
             },
         )()
     ]
