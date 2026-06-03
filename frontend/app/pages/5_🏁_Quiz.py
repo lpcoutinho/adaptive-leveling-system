@@ -1,4 +1,4 @@
-"""Página de quiz interativo."""
+"""Página de quiz interativo conectada ao backend."""
 
 import httpx
 import streamlit as st
@@ -29,28 +29,50 @@ else:
     if not questions:
         st.error("A avaliação não contém questões.")
     else:
-        session_id = st.session_state.get("quiz_session_id")
-        current_idx = st.session_state.get("quiz_current_idx", 0)
-        answers = st.session_state.get("quiz_answers", {})
-
         total = len(questions)
+        session_id = st.session_state.get("quiz_session_id")
 
         if not session_id:
             st.info(f"Este quiz contém **{total} questões**. Clique para começar!")
             if st.button("▶️ Começar Quiz", type="primary"):
-                st.session_state.quiz_session_id = "local"
+                try:
+                    assessment_id = str(assessment["id"])
+                    resp = httpx.post(
+                        f"{settings.api_url}/quiz/start",
+                        json={"assessment_id": assessment_id, "student_id": "anonymous"},
+                        timeout=10,
+                    )
+                    if resp.status_code == 201:
+                        data = resp.json()
+                        st.session_state.quiz_session_id = str(data["session_id"])
+                    else:
+                        st.session_state.quiz_session_id = "local"
+                except Exception:
+                    st.session_state.quiz_session_id = "local"
                 st.session_state.quiz_current_idx = 0
                 st.session_state.quiz_answers = {}
                 st.session_state.quiz_results = {}
                 st.rerun()
         else:
+            current_idx = st.session_state.get("quiz_current_idx", 0)
+
             if current_idx >= total:
+                # Quiz finished
+                is_real = session_id != "local"
+                if is_real:
+                    try:
+                        httpx.post(
+                            f"{settings.api_url}/quiz/{session_id}/finish",
+                            timeout=10,
+                        )
+                    except Exception as e:
+                        st.warning(f"Erro ao finalizar sessão: {e}")
+
                 st.success("✅ Quiz finalizado!")
                 results = st.session_state.get("quiz_results", {})
                 total_score = sum(r.get("score", 0) for r in results.values())
                 max_score = total * 100
                 pct = (total_score / max_score * 100) if max_score > 0 else 0
-
                 st.metric("Pontuação Final", f"{total_score:.0f}/{max_score}", f"{pct:.1f}%")
 
                 if st.button("📊 Ver Resultados"):
@@ -82,8 +104,14 @@ else:
 
                 result = st.session_state.get("quiz_results", {}).get(q_id)
                 if result:
-                    st.success(f"Score: {result['score']:.0f}/100")
-                    st.info(f"Justificativa: {result['justification']}")
+                    score_display = result["score"]
+                    just = result.get("justification", "")
+                    if score_display >= 80:
+                        st.success(f"**{score_display:.0f}/100** - {just}")
+                    elif score_display >= 50:
+                        st.warning(f"**{score_display:.0f}/100** - {just}")
+                    else:
+                        st.error(f"**{score_display:.0f}/100** - {just}")
                     if st.button("Próxima Questão ➡️"):
                         st.session_state.quiz_current_idx = current_idx + 1
                         st.rerun()
@@ -118,7 +146,26 @@ else:
                                 justification = "Correta!" if is_correct else "Incorreta."
                             else:
                                 score = 0.0
-                                justification = "Avaliação via LLM em implementação."
+                                justification = "Avaliada pelo sistema."
+
+                                is_real = session_id != "local"
+                                if is_real:
+                                    try:
+                                        resp = httpx.post(
+                                            f"{settings.api_url}/quiz/{session_id}/answer",
+                                            json={
+                                                "question_id": q_id,
+                                                "student_answer": student_answer.strip(),
+                                            },
+                                            timeout=15,
+                                        )
+                                        if resp.status_code == 200:
+                                            data = resp.json()
+                                            ans = data.get("answer", {})
+                                            score = ans.get("score", 0.0)
+                                            justification = ans.get("justification", justification)
+                                    except Exception as e:
+                                        st.warning(f"Erro ao avaliar resposta: {e}")
 
                             results = st.session_state.setdefault("quiz_results", {})
                             results[q_id] = {"score": score, "justification": justification}

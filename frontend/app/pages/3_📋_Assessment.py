@@ -3,7 +3,6 @@
 import httpx
 import streamlit as st
 
-from frontend.app.components.quiz import render_quiz
 from frontend.app.config import get_frontend_settings
 
 settings = get_frontend_settings()
@@ -92,5 +91,3 @@ else:
             if st.button("🏁 Iniciar Quiz", type="primary"):
                 st.session_state["current_assessment"] = assessment
                 st.switch_page("pages/5_🏁_Quiz.py")
-
-            render_quiz(questions)
