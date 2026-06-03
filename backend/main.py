@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import health, pdf, prerequisites
+from backend.api.routes import assessment, health, pdf, prerequisites
 from backend.config import get_settings
 from backend.infrastructure.telemetry.logger import setup_logger
 from backend.infrastructure.telemetry.tracer import setup_telemetry
@@ -12,18 +12,11 @@ settings = get_settings()
 
 
 def create_app() -> FastAPI:
-    """
-    Cria e configura a instância do FastAPI.
-
-    Returns:
-        FastAPI: Aplicação configurada.
-    """
+    """Cria e configura a instância do FastAPI."""
     app = FastAPI(title=settings.app_name, version=settings.app_version, debug=settings.debug)
 
-    # Configurar Logger
     setup_logger(debug=settings.debug)
 
-    # Configurar CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -32,7 +25,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Configurar Telemetria (OpenTelemetry)
     setup_telemetry(
         app,
         service_name=settings.otel_service_name,
@@ -40,10 +32,10 @@ def create_app() -> FastAPI:
         debug=settings.debug,
     )
 
-    # Incluir Rotas
     app.include_router(health.router)
     app.include_router(pdf.router, prefix="/api/v1")
     app.include_router(prerequisites.router, prefix="/api/v1")
+    app.include_router(assessment.router, prefix="/api/v1")
 
     @app.get("/")
     async def root():
