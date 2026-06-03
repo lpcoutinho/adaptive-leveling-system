@@ -6,25 +6,36 @@ from frontend.app.config import get_frontend_settings
 
 # Importar as páginas
 from frontend.app.pages.health import show_health
+from frontend.app.pages.prerequisites import show_prerequisites
 from frontend.app.pages.upload import show_upload
 
 settings = get_frontend_settings()
+
+PAGE_OPTIONS = ["Home", "Upload de Aula", "Inteligência da Aula", "Status do Sistema"]
 
 
 def main():
     """Ponto de entrada do frontend."""
     st.set_page_config(page_title=settings.app_title, page_icon="🎓", layout="wide")
 
+    if "page" not in st.session_state:
+        st.session_state.page = "Home"
+
     # Navegação na Sidebar
     st.sidebar.title("📚 Menu")
     page = st.sidebar.radio(
-        "Navegue entre as etapas:", ["Home", "Upload de Aula", "Status do Sistema"]
+        "Navegue entre as etapas:",
+        PAGE_OPTIONS,
+        index=PAGE_OPTIONS.index(st.session_state.page),
     )
+    st.session_state.page = page
 
     if page == "Home":
         show_home()
     elif page == "Upload de Aula":
         show_upload()
+    elif page == "Inteligência da Aula":
+        show_prerequisites()
     elif page == "Status do Sistema":
         show_health()
 
@@ -53,7 +64,8 @@ def show_home():
         st.info("### 🚀 Comece por aqui")
         st.write("Faça o upload de uma aula em PDF para iniciar o processo.")
         if st.button("Ir para Upload"):
-            st.rerun()  # Recarrega para refletir a navegação se necessário (ou use query params)
+            st.session_state.page = "Upload de Aula"
+            st.rerun()
 
     with col2:
         st.success("### 📊 Seu Progresso")

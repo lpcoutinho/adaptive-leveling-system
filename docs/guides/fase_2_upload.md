@@ -112,14 +112,16 @@ O processo de upload seguirá um fluxo otimizado para evitar duplicação de pro
 
 ## Critérios de Aceitação
 
-- [ ] Arquivo de testes PDF (ex: `calculus_1.pdf`) disponível.
-- [ ] Endpoint de upload funcional e seguro.
-- [ ] O arquivo recebido é efetivamente salvo no Minio/S3.
-- [ ] Metadados do arquivo (e hash SHA-256) salvos no PostgreSQL.
-- [ ] Idempotência verificada via hash (não duplicar arquivos idênticos).
-- [ ] Extração de texto implementada e funcional.
-- [ ] Interface de upload no Streamlit amigável.
-- [ ] Testes passando e cobertura mantida > 80%.
+- [x] Arquivo de testes PDF (ex: `calculus_1.pdf`) disponível.
+- [x] Endpoint de upload funcional e seguro.
+- [x] O arquivo recebido é efetivamente salvo no Minio/S3.
+- [x] Metadados do arquivo (e hash SHA-256) salvos no PostgreSQL.
+- [x] Idempotência verificada via hash (não duplicar arquivos idênticos).
+- [x] Extração de texto implementada e funcional.
+- [x] Interface de upload no Streamlit amigável.
+- [x] Testes passando e cobertura mantida > 80%.
+
+**Status: FASE 2 COMPLETA ✅**
 
 ---
 

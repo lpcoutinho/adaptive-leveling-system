@@ -35,22 +35,28 @@ def show_upload():
 
                 if response and response.status_code == 201:
                     data = response.json()
-                    st.success("✅ PDF processado com sucesso!")
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("ID do Documento", str(data["id"])[:8] + "...")
-                    with col2:
-                        st.metric("Hash SHA-256", data["hash"][:10] + "...")
-
                     st.session_state["last_pdf_id"] = data["id"]
-
-                    if st.button("Ir para Próxima Etapa (Pré-requisitos)"):
-                        st.info("Fase 3 em desenvolvimento.")
+                    st.session_state["last_pdf_hash"] = data["hash"]
+                    st.rerun()
 
                 elif response:
                     error_detail = response.json().get("detail", "Erro desconhecido")
                     st.error(f"Erro no processamento: {error_detail}")
+
+    if st.session_state.get("last_pdf_id"):
+        pdf_id = st.session_state["last_pdf_id"]
+        hash = st.session_state["last_pdf_hash"]
+        st.success("✅ PDF processado com sucesso!")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("ID do Documento", str(pdf_id)[:8] + "...")
+        with col2:
+            st.metric("Hash SHA-256", str(hash)[:10] + "...")
+
+        if st.button("Ir para Próxima Etapa (Pré-requisitos)"):
+            st.session_state.page = "Inteligência da Aula"
+            st.rerun()
 
 
 if __name__ == "__main__":

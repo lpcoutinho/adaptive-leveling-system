@@ -678,7 +678,7 @@ Personalized Study Plan
 
 ## Próximos Passos
 
-1. Começar pela **Fase 1** (fundação)
-2. Seguir sequencialmente pelas fases 2-8
+1. Validar a **Fase 3** (extração LLM)
+2. Seguir sequencialmente pelas fases 4-8
 3. Finalizar com **Fase 9** (polimento)
 4. Testar cada fase antes de prosseguir
