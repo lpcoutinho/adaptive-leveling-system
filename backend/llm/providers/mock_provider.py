@@ -32,8 +32,16 @@ class MockProvider(ILLMProvider):
         try:
             return response_model()
         except Exception:
-            # Fallback para construct se o init falhar (menos seguro)
-            return response_model.model_construct()
+            try:
+                obj = response_model.model_construct()
+                # Check if all fields are present (model_construct skips required fields)
+                for name in response_model.model_fields:
+                    if not hasattr(obj, name):
+                        raise AttributeError(f"Missing field: {name}")
+                return obj
+            except Exception:
+                kwargs = dict.fromkeys(response_model.model_fields, "placeholder")
+                return response_model.model_construct(**kwargs)  # type: ignore[arg-type]
 
     async def generate_text(self, prompt: str) -> str:
         """Retorna um texto de mock."""

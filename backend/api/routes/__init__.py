@@ -6,4 +6,5 @@ from backend.api.routes import (  # noqa: F401
     prerequisites,
     quiz,
     readiness,
+    workflow,
 )
