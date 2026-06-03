@@ -31,10 +31,15 @@ async def save_knowledge_graph(graph: KnowledgeGraph) -> KnowledgeGraph:
     main_concepts_json = [c.model_dump() for c in graph.main_concepts]
     prerequisites_json = [p.model_dump() for p in graph.prerequisites]
 
+    # Garante que pdf_id é um objeto UUID válido
+    pdf_uuid = graph.pdf_id
+    if isinstance(pdf_uuid, str):
+        pdf_uuid = UUID(pdf_uuid)
+
     result = await execute_query(
         query,
         graph.id,
-        UUID(graph.pdf_id) if isinstance(graph.pdf_id, str) else graph.pdf_id,
+        pdf_uuid,
         json.dumps(main_concepts_json),
         json.dumps(prerequisites_json),
     )
@@ -66,7 +71,7 @@ async def get_knowledge_graph_by_pdf_id(pdf_id: UUID) -> KnowledgeGraph | None:
 
     row = result[0]
 
-    # Reconstrução dos modelos a partir do JSONB (que vem como string ou dict)
+    # Reconstrução dos modelos a partir do JSONB
     main_concepts_data = row["main_concepts"]
     if isinstance(main_concepts_data, str):
         main_concepts_data = json.loads(main_concepts_data)
@@ -77,7 +82,7 @@ async def get_knowledge_graph_by_pdf_id(pdf_id: UUID) -> KnowledgeGraph | None:
 
     return KnowledgeGraph(
         id=row["id"],
-        pdf_id=str(row["pdf_id"]),
+        pdf_id=row["pdf_id"],
         main_concepts=[ConceptNode(**c) for c in main_concepts_data],
         prerequisites=[Prerequisite(**p) for p in prerequisites_data],
         created_at=row["created_at"],

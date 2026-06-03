@@ -1,6 +1,7 @@
 """Modelos de domínio para pré-requisitos e grafos de conhecimento."""
 
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -36,7 +37,7 @@ class ConceptNode(BaseModel):
 class KnowledgeGraph(UUIDModel, TimestampModel):
     """Estrutura completa que mapeia a aula, seus conceitos e pré-requisitos."""
 
-    pdf_id: str = Field(default="", description="Referência ao documento PDF original")
+    pdf_id: UUID | None = Field(default=None, description="Referência ao documento PDF original")
     main_concepts: list[ConceptNode] = Field(
         default_factory=list, description="Conceitos principais identificados na aula"
     )
