@@ -40,7 +40,23 @@ class MockProvider(ILLMProvider):
                         raise AttributeError(f"Missing field: {name}")
                 return obj
             except Exception:
-                kwargs = dict.fromkeys(response_model.model_fields, "placeholder")
+                kwargs: dict[str, object] = {}
+                for name, field in response_model.model_fields.items():
+                    ann = field.annotation
+                    if ann is str:
+                        kwargs[name] = "placeholder"
+                    elif ann is float:
+                        kwargs[name] = 0.0
+                    elif ann is int:
+                        kwargs[name] = 0
+                    elif ann is bool:
+                        kwargs[name] = False
+                    elif ann is list or getattr(ann, "__origin__", None) is list:
+                        kwargs[name] = []
+                    elif ann is dict or getattr(ann, "__origin__", None) is dict:
+                        kwargs[name] = {}
+                    else:
+                        kwargs[name] = None
                 return response_model.model_construct(**kwargs)  # type: ignore[arg-type]
 
     async def generate_text(self, prompt: str) -> str:
