@@ -6,6 +6,9 @@ from fastapi import APIRouter, HTTPException
 
 from backend.api.schemas.quiz import (
     AnswerResult,
+    BatchAnswerRequest,
+    BatchAnswerResponse,
+    BatchEvalItem,
     FinishQuizResponse,
     StartQuizRequest,
     StartQuizResponse,
@@ -14,6 +17,7 @@ from backend.api.schemas.quiz import (
 )
 from backend.infrastructure.repository.assessment_repository import get_assessment_by_id
 from backend.services.quiz_service import (
+    evaluate_pending_answers,
     finish_quiz,
     get_next_question,
     start_quiz,
@@ -76,6 +80,26 @@ async def api_submit_answer(session_id: UUID, req: SubmitAnswerRequest):
         max_score=session.max_score,
         questions_remaining=remaining,
     )
+
+
+@router.post("/{session_id}/evaluate-pending", response_model=BatchAnswerResponse)
+async def api_evaluate_pending(session_id: UUID, req: BatchAnswerRequest):
+    """Avalia respostas SA/Calc pendentes em lote num único prompt LLM."""
+    pending = [(a.question_id, a.student_answer) for a in req.answers]
+    try:
+        results = await evaluate_pending_answers(session_id, pending)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    items = [
+        BatchEvalItem(
+            question_id=qid,
+            score=r["score"],
+            justification=r["justification"],
+        )
+        for qid, r in results.items()
+    ]
+    return BatchAnswerResponse(session_id=str(session_id), results=items)
 
 
 @router.post("/{session_id}/finish", response_model=FinishQuizResponse)

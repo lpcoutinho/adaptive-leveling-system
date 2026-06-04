@@ -45,3 +45,18 @@ class FinishQuizResponse(BaseModel):
     max_score: float
     percentage: float
     status: str
+
+
+class BatchEvalItem(BaseModel):
+    question_id: str
+    score: float
+    justification: str
+
+
+class BatchAnswerRequest(BaseModel):
+    answers: list[SubmitAnswerRequest]
+
+
+class BatchAnswerResponse(BaseModel):
+    session_id: str
+    results: list[BatchEvalItem]
