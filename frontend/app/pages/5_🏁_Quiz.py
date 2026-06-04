@@ -11,15 +11,6 @@ settings = get_frontend_settings()
 API = f"{settings.api_url}/api/v1"
 
 
-def _evaluate_mcq(student_answer: str, correct_answer: str) -> dict:
-    """Avaliação determinística local para múltipla escolha."""
-    correct = student_answer.strip().lower() == correct_answer.strip().lower()
-    return {
-        "score": 100.0 if correct else 0.0,
-        "justification": "Resposta correta!" if correct else "Resposta incorreta.",
-    }
-
-
 st.title("🏁 Quiz Interativo")
 st.markdown("Responda às questões para avaliar seu conhecimento.")
 
@@ -84,7 +75,6 @@ else:
 
                 if q_type == "multiple_choice":
                     options = q.get("options", [])
-                    # Encontra o índice da opção salva para pré-selecionar
                     try:
                         start_idx = options.index(prev_answer) if prev_answer in options else None
                     except ValueError:
@@ -113,13 +103,13 @@ else:
                 col_a, col_b = st.columns([1, 1])
                 with col_a:
                     if current_idx > 0 and st.button("◀️ Anterior"):
-                        st.session_state.quiz_answers[q_id] = answer  # Salva antes de voltar
+                        st.session_state.quiz_answers[q_id] = answer
                         st.session_state.quiz_current_idx = current_idx - 1
                         st.rerun()
                 with col_b:
                     label = "Finalizar e Avaliar 🏁" if current_idx == total - 1 else "Próxima ➡️"
                     if st.button(label, type="primary"):
-                        st.session_state.quiz_answers[q_id] = answer  # Salva resposta
+                        st.session_state.quiz_answers[q_id] = answer
                         st.session_state.quiz_current_idx = current_idx + 1
                         st.rerun()
 
@@ -138,28 +128,20 @@ else:
 
                 final_results: dict[str, dict] = {}
 
-                # 1. Avalia MCQ localmente
-                for q in questions:
-                    q_id = str(q.get("id", ""))
-                    if q.get("type") == "multiple_choice":
-                        ans = all_answers.get(q_id, "")
-                        final_results[q_id] = _evaluate_mcq(ans, q.get("correct_answer", ""))
-
-                # 2. Avalia SA/Calc via Backend (Batch)
-                pending = [
+                # Prepara TODAS as respostas para o backend (MCQ + SA/Calc)
+                payload = [
                     {
                         "question_id": str(q.get("id", "")),
                         "student_answer": all_answers.get(str(q.get("id", "")), ""),
                     }
                     for q in questions
-                    if q.get("type") != "multiple_choice"
                 ]
 
-                if pending and is_real:
+                if is_real:
                     try:
                         resp = httpx.post(
                             f"{API}/quiz/{session_id}/evaluate-pending",
-                            json={"answers": pending},
+                            json={"answers": payload},
                             timeout=60,
                         )
                         if resp.status_code == 200:
@@ -172,13 +154,12 @@ else:
                     except Exception as e:
                         st.error(f"Erro na avaliação em lote: {e}")
 
-                # 3. Fallback para itens não avaliados
+                # Fallback para itens não avaliados ou modo local
                 for q in questions:
                     q_id = str(q.get("id", ""))
                     if q_id not in final_results:
                         ans = all_answers.get(q_id, "").strip()
-                        msg = "Erro ao obter avaliação da IA." if ans else "Questão não respondida."
-                        final_results[q_id] = {"score": 0.0, "justification": msg}
+                        final_results[q_id] = {"score": 0.0, "justification": "Modo local ou erro."}
 
                 st.session_state.quiz_results = final_results
                 st.session_state.quiz_mode = "done"
@@ -193,6 +174,12 @@ else:
             if session_id != "local":
                 with contextlib.suppress(Exception):
                     httpx.post(f"{API}/quiz/{session_id}/finish", timeout=10)
+
+                # Se viemos de um workflow, retoma ele
+                if "current_workflow_id" in st.session_state:
+                    with contextlib.suppress(Exception):
+                        workflow_id = st.session_state.current_workflow_id
+                        httpx.post(f"{API}/workflow/{workflow_id}/resume", timeout=10)
 
             total_score = sum(r.get("score", 0.0) for r in results.values())
             max_score = total * 100
@@ -238,6 +225,7 @@ else:
                         "quiz_answers",
                         "quiz_results",
                         "quiz_mode",
+                        "readiness_result",
                     ]
                     for k in keys:
                         st.session_state.pop(k, None)

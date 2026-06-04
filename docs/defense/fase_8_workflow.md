@@ -2,53 +2,30 @@
 
 ## 1. Visão Geral
 
-A Fase 8 integra todas as fases anteriores (3 a 7) em um workflow orquestrado e stateful utilizando LangGraph. O sistema agora opera como uma máquina de estados que gerencia o ciclo completo: upload → extração → avaliação → quiz → diagnóstico → nivelamento.
+A Fase 8 representa o ápice da maturidade operacional do sistema. Em vez de etapas isoladas, o projeto passa a operar como uma **Agente Inteligente de Fluxo**, onde cada decisão e transição de estado é orquestrada por uma máquina de estados robusta.
 
 ## 2. Decisões Arquiteturais
 
-### 2.1. LangGraph StateGraph como Orquestrador Central
+### 2.1. A Escolha do LangGraph
 
-* **Decisão:** Utilização do `StateGraph` do LangGraph para modelar o workflow como um grafo de estados explícito.
-* **Racional:** O problema de nivelamento educacional mapeia naturalmente para um workflow sequencial com pontos de decisão. LangGraph oferece:
-  * **State management explícito:** Cada transição preserva e valida o estado.
-  * **Checkpointing:** Workflows podem ser pausados e retomados.
-  * **Tracing integrado:** Cada passo é automaticamente registrado no LangSmith/LangFuse.
-  * **Paralelismo:** Nós independentes (ex: gap detection + strength analysis) podem executar em paralelo.
+* **Decisão:** Utilização do `StateGraph` como orquestrador central.
+* **Racional:** Workflows educacionais são naturalmente cíclicos e dependentes de interação humana (o Quiz). O LangGraph permite modelar essas interações ("Human-in-the-loop") de forma nativa através de pontos de interrupção e persistência de estado.
 
-### 2.2. Nós do Workflow
+### 2.2. Checkpointing e Tolerância a Falhas
 
-* **Decisão:** Cinco nós principais no grafo: `extract_prerequisites`, `generate_assessment`, `evaluate_student`, `detect_gaps`, `generate_leveling`.
-* **Racional:** Cada nó encapsula uma fase completa com responsabilidade única. A separação permite:
-  * Testar cada nó independentemente.
-  * Substituir implementações (ex: trocar o método de avaliação).
-  * Adicionar nós de validação ou pós-processamento sem alterar o fluxo principal.
+* **Decisão:** Persistência de cada transição de nó no PostgreSQL.
+* **Racional:** Em um workflow longo (upload até nivelamento), falhas de rede ou reinicializações do servidor são fatais para a experiência do usuário. Com checkpointing, o aluno nunca perde o progresso e o sistema se torna resiliente a falhas temporárias de infraestrutura.
 
-### 2.3. Checkpointing com PostgreSQL
+### 2.3. Separação em Nós Especializados
 
-* **Decisão:** Checkpoints do workflow são persistidos no PostgreSQL via tabela dedicada.
-* **Racional:** Diferente de cache em memória, checkpoints em banco permitem recuperação mesmo após reinicialização do servidor. O aluno pode retomar o workflow de onde parou.
+* **Decisão:** Cada fase (Extração, Avaliação, etc.) é encapsulada em um nó do grafo.
+* **Racional:** Isso garante o princípio de **Responsabilidade Única**. Podemos atualizar a lógica de extração sem afetar a lógica de nivelamento, além de permitir testes unitários em cada nó individualmente.
 
-### 2.4. Workflow State Tipado (Pydantic)
+## 3. Observabilidade e Tracing
 
-* **Decisão:** O estado do workflow é um modelo Pydantic com validação estrita de tipos.
-* **Racional:** Type safety no estado elimina bugs de "shape" (ex: acessar campo que não existe). O Pydantic valida automaticamente cada transição de estado, prevenindo corrupção.
+* **LangGraph + OpenTelemetry:** A orquestração está integrada ao Jaeger. Isso permite visualizar o "caminho" do aluno através dos estados, identificando onde ele passa mais tempo ou onde ocorrem abandonos.
+* **Visibilidade de Estado:** A página de Workflow fornece uma janela para o "cérebro" do sistema, mostrando ao usuário (ou professor) exatamente em que etapa o processamento se encontra.
 
-## 3. Fluxo de Execução
+## 4. Conclusão
 
-```
-[START] → extract_prerequisites → generate_assessment → evaluate_student → detect_gaps → generate_leveling → [END]
-                ↓                       ↓                     ↓               ↓                  ↓
-           KnowledgeGraph         Assessment[]          StudentScore     GapAnalysis       LevelingPlan
-```
-
-* **Condições de desvio:** Se a extração falhar (PDF inválido), o workflow termina com erro. Se o aluno já possui nivelamento prévio, o nó de geração pode ser pulado.
-
-## 4. Observabilidade e Testabilidade
-
-* **Tracing:** O LangGraph integra nativamente com OpenTelemetry. Cada nó do workflow aparece como um span no Jaeger.
-* **Testes E2E:** O workflow completo é testado com `MockProvider` em todos os nós, validando o fluxo sem chamadas externas.
-* **Resume:** Testes específicos validam que workflows interrompidos são retomados corretamente.
-
-## 5. Conclusão
-
-A Fase 8 consolida todo o sistema em um workflow orquestrado, stateful e resiliente. O LangGraph fornece a infraestrutura de orquestração necessária para operar o Adaptive Leveling System como um produto coeso.
+A integração com LangGraph eleva o *Adaptive Leveling System* de um conjunto de scripts para uma aplicação de IA de nível profissional, preparada para lidar com fluxos complexos, interrupções e alta disponibilidade.
