@@ -1,6 +1,5 @@
 """Serviço para orquestração da extração de inteligência via LLM."""
 
-import os
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,6 +11,7 @@ from backend.infrastructure.repository.prerequisite_repository import (
     get_knowledge_graph_by_pdf_id,
     save_knowledge_graph,
 )
+from backend.llm.prompt_router import PromptUseCase, get_prompt_router
 
 
 class LLMExtractionSchema(BaseModel):
@@ -19,15 +19,6 @@ class LLMExtractionSchema(BaseModel):
 
     main_concepts: list[ConceptNode]
     prerequisites: list[Prerequisite]
-
-
-def _load_prompt_template() -> str:
-    """Carrega o template do prompt do arquivo de texto."""
-    prompt_path = os.path.join(
-        os.path.dirname(__file__), "..", "llm", "prompts", "prerequisite_extractor_v1.txt"
-    )
-    with open(prompt_path, encoding="utf-8") as f:
-        return f.read()
 
 
 async def extract_prerequisites(pdf_id: UUID) -> KnowledgeGraph:
@@ -50,8 +41,9 @@ async def extract_prerequisites(pdf_id: UUID) -> KnowledgeGraph:
     if not pdf_doc or not pdf_doc.content_text:
         raise ValueError(f"PDF {pdf_id} não encontrado ou sem texto extraído.")
 
-    # 3. Prepara o prompt
-    template = _load_prompt_template()
+    # 3. Prepara o prompt via PromptRouter
+    router = get_prompt_router()
+    template = router.get_prompt(PromptUseCase.PREREQUISITE_EXTRACTOR)
     prompt = template.replace("{{content_text}}", pdf_doc.content_text)
 
     # 4. Chama o LLM (via Camada de Abstração)

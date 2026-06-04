@@ -1,7 +1,6 @@
 """Serviço para orquestração da geração de avaliações diagnósticas via LLM."""
 
 import json
-import os
 from uuid import UUID
 
 from loguru import logger
@@ -16,15 +15,7 @@ from backend.infrastructure.repository.prerequisite_repository import (
     get_knowledge_graph_by_pdf_id,
 )
 from backend.llm.factory import LLMFactory
-
-
-def _load_prompt_template() -> str:
-    """Carrega o template do prompt de geração de avaliação."""
-    prompt_path = os.path.join(
-        os.path.dirname(__file__), "..", "llm", "prompts", "assessment_generator_v1.txt"
-    )
-    with open(prompt_path, encoding="utf-8") as f:
-        return f.read()
+from backend.llm.prompt_router import PromptUseCase, get_prompt_router
 
 
 class AssessmentPrompt(BaseModel):
@@ -59,7 +50,8 @@ async def generate_assessment(pdf_id: UUID) -> Assessment:
             "Execute a extração de pré-requisitos primeiro."
         )
 
-    template = _load_prompt_template()
+    router = get_prompt_router()
+    template = router.get_prompt(PromptUseCase.ASSESSMENT_GENERATOR)
     prerequisites_json = json.dumps(
         [p.model_dump() for p in graph.prerequisites], indent=2, ensure_ascii=False
     )

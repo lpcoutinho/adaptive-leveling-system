@@ -14,24 +14,22 @@ from backend.infrastructure.repository.readiness_repository import (
     get_readiness_by_session,
 )
 from backend.llm.base.interface import ILLMProvider
+from backend.llm.prompt_router import PromptUseCase, get_prompt_router
 
 IMPORTANCE_WEIGHTS = {"Critical": 3.0, "Important": 2.0, "Helpful": 1.0}
 
 
 def _load_prompt_template() -> str:
-    path = "backend/llm/prompts/leveling_generator_v1.txt"
-    try:
-        with open(path) as f:
-            return f.read()
-    except FileNotFoundError:
-        return _fallback_prompt()
+    """Carrega o template do prompt de geração de nivelamento."""
+    router = get_prompt_router()
+    return router.get_prompt(PromptUseCase.LEVELING_GENERATOR)
 
 
 def _fallback_prompt() -> str:
     return (
         "Gere uma explicação educacional para o gap '{gap_name}' "
         "(importância: {importance}, score atual: {current_score}%). "
-        "Inclua: why_important, explanation, calculus_example, exercise, exercise_answer."
+        "Inclua: why_important, explanation, discipline_example, exercise, exercise_answer."
     )
 
 
@@ -53,13 +51,14 @@ async def generate_leveling_plan(
     session_id: UUID,
     readiness_id: UUID,
     llm: ILLMProvider,
+    force_regenerate: bool = False,
 ) -> LevelingPlan:
     logger.info(
         f"Iniciando geração de plano de nivelamento para sessão {session_id}, "
         f"readiness {readiness_id}..."
     )
     existing = await get_plan_by_readiness(readiness_id)
-    if existing:
+    if existing and not force_regenerate:
         logger.info(
             f"Plano de nivelamento existente encontrado para readiness {readiness_id}. "
             "Reutilizando..."
@@ -92,19 +91,31 @@ async def generate_leveling_plan(
             )
             expl = await llm.generate_structured(prompt, GapExplanation)
             explanations.append(expl)
-        except Exception:
+        except Exception as e:
+            logger.error(
+                f"Erro ao gerar explicação para gap '{gap.prerequisite_name}': {e}. "
+                f"Provider: {llm.get_provider_name()}, Model: {llm.model}"
+            )
+            # Fallback melhorado com explicação mais útil
             explanations.append(
                 GapExplanation(
                     gap_name=gap.prerequisite_name,
                     importance=gap.importance,
                     current_score=gap.score,
-                    why_important="Conceito fundamental para Cálculo I.",
-                    explanation=(
-                        f"{gap.prerequisite_name} é um conceito básico que precisa ser revisado."
+                    why_important=f"{gap.prerequisite_name} é fundamental para entender "
+                    f"conceitos avançados desta disciplina.",
+                    explanation=f"O conceito de {gap.prerequisite_name} envolve compreender "
+                    f"técnicas essenciais. Revise os fundamentos e pratique com exercícios.",
+                    discipline_example=f"Na disciplina, {gap.prerequisite_name} é aplicado "
+                    f"para resolver problemas práticos e análises.",
+                    exercise=f"Para praticar {gap.prerequisite_name}, resolva problemas "
+                    f"que envolvam aplicar este conceito em diferentes contextos.",
+                    exercise_answer=(
+                        f"Para resolver exercícios de {gap.prerequisite_name}: "
+                        f"1) Identifique os dados do problema; 2) Determine o método; "
+                        f"3) Execute os cálculos passo a passo; 4) Verifique o resultado. "
+                        "A resposta depende dos dados específicos do problema."
                     ),
-                    calculus_example="Consulte seu material didático.",
-                    exercise="Pratique com exercícios do seu livro texto.",
-                    exercise_answer="Verifique com seu professor.",
                 )
             )
 

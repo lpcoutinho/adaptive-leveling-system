@@ -21,6 +21,7 @@ async def trigger_leveling_generation(
             session_id=request.session_id,
             readiness_id=request.readiness_id,
             llm=llm,
+            force_regenerate=request.force_regenerate,
         )
         return plan
     except ValueError as e:

@@ -20,6 +20,7 @@ class WorkflowResponse(BaseModel):
     current_node: str = Field(default="", description="Nó atual no grafo de execução")
     progress: float = Field(default=0.0, description="Progresso de 0.0 a 1.0")
     error: str | None = Field(default=None, description="Mensagem de erro, se houver")
+    state: dict | None = Field(default=None, description="Estado completo do workflow")
     created_at: str = Field(default="", description="Data de criação")
     updated_at: str = Field(default="", description="Data da última atualização")
 
