@@ -18,7 +18,6 @@ if "readiness_result" not in st.session_state:
 
 
 def analyze_readiness():
-
     mock_gaps = [
         {"name": "Derivadas de Funções Trigonométricas", "score": 45.0, "importance": "Critical"},
         {"name": "Regra da Cadeia", "score": 50.0, "importance": "Critical"},
