@@ -1,5 +1,7 @@
 """Página de orquestração de workflow com LangGraph com Quiz embutido."""
 
+from typing import Any
+
 import httpx
 import streamlit as st
 
@@ -214,7 +216,9 @@ if "current_workflow_id" in st.session_state:
                         for i, result in enumerate(results):
                             q_id = result.get("question_id")
                             # Encontrar a pergunta original
-                            question = next((q for q in questions if str(q.get("id")) == q_id), {})
+                            question: dict[str, Any] = next(
+                                (q for q in questions if str(q.get("id")) == q_id), {}
+                            )
 
                             with st.expander(
                                 f"Questão {i + 1}: {question.get('text', 'N/A')[:60]}...",
