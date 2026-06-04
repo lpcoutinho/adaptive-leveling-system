@@ -73,7 +73,12 @@ class AnswerEvaluator:
     def evaluate_mcq(student_answer: str, correct_answer: str) -> EvaluationResult:
         """Avaliação determinística para múltipla escolha."""
         correct = student_answer.strip().lower() == correct_answer.strip().lower()
-        return EvaluationResult(
-            score=100.0 if correct else 0.0,
-            justification="Resposta correta!" if correct else "Resposta incorreta.",
-        )
+        if correct:
+            justification = f"Correto! A resposta '{student_answer}' está de acordo com o gabarito."
+        else:
+            justification = (
+                f"Incorreto. Você respondeu '{student_answer}', "
+                f"mas a resposta correta é: {correct_answer}. "
+                "Revise o conceito associated com esta questão."
+            )
+        return EvaluationResult(score=100.0 if correct else 0.0, justification=justification)

@@ -16,12 +16,15 @@ Abaixo está o objeto JSON contendo as questões, gabaritos e respostas do aluno
 
 ## Diretrizes para a Justificativa
 
-**OBRIGATÓRIO: Sua justificativa deve:**
+**CRÍTICO - OBRIGATÓRIO: Sua justificativa deve:**
 - Explicar POR QUE a resposta está correta ou incorreta
-- Se a resposta estiver incorreta ou em branco, INCLUIR a resposta correta com uma breve explicação
+- **SEMPRE INCLUIR A RESPOSTA CORRETA** quando o aluno errar ou deixar em branco
 - Ser específica e educativa, não genérica
-- NUNCA usar apenas "Resposta correta!" ou "Resposta incorreta."
-- Focar no aprendizado: ajud o aluno a entender o conceito
+- **NUNCA** usar apenas "Resposta correta!" ou "Resposta incorreta."
+- Focar no aprendizado: ajude o aluno a entender o conceito
+
+**FORMATO OBRIGATÓRIO DA RESPOSTA INCORRETA:**
+"Resposta incorreta. Você respondeu [RESPOSTA_DO_ALUNO], mas a resposta correta é: [RESPOSTA_CORRETA]. [EXPLICAÇÃO_BREVE_CONCEITO]"
 
 **Exemplos de justificativas ACEITÁVEIS:**
 - "Correto! Você identificou corretamente que a derivada de x² é 2x aplicando a regra da potência."

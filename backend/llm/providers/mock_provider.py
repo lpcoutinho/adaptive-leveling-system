@@ -61,20 +61,20 @@ class MockProvider(ILLMProvider):
                         elif expected and expected.lower() in ans.lower():
                             score = 100.0
                             justification = (
-                                "Correto! Você identificou adequadamente o conceito. "
-                                f"Sua resposta '{ans}' está de acordo com o esperado."
+                                f"Correto! A resposta '{ans}' está de acordo com o gabarito."
                             )
                         elif len(ans) > len(expected) * 0.5:
                             score = 75.0
                             justification = (
-                                "Parcialmente correto. Sua resposta está no caminho certo, "
-                                f"mas poderia ser mais precisa. A resposta completa: {expected}."
+                                f"Parcialmente correto. Você respondeu: '{ans}'. "
+                                f"A resposta correta completa é: {expected}. "
+                                "Você está no caminho certo, mas precisa ser mais preciso."
                             )
                         else:
                             score = 50.0
                             justification = (
-                                f"Incorreto. Você respondeu: '{ans}'. "
-                                f"A resposta correta é: {expected}. "
+                                f"Incorreto. Você respondeu: '{ans}', "
+                                f"mas a resposta correta é: {expected}. "
                                 "Revise o conceito e tente novamente."
                             )
 
