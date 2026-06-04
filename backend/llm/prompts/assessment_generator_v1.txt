@@ -14,8 +14,9 @@ Lista de pré-requisitos que precisam ser avaliados:
 
 ## Regras de Geração
 
-1. Gere EXATAMENTE 2 questões para cada pré-requisito listado.
-2. Distribuição de tipos: ~40% Múltipla Escolha, ~30% Resposta Curta, ~30% Cálculo.
+1. Gere um total de EXATAMENTE 10 questões, distribuídas proporcionalmente entre os pré-requisitos listados.
+2. Cada pré-requisito deve ser avaliado por pelo menos 1 questão.
+3. Distribuição de tipos: ~40% Múltipla Escolha, ~30% Resposta Curta, ~30% Cálculo.
 3. Varie os tipos de questão entre os pré-requisitos (evite repetir o mesmo tipo).
 4. Para Múltipla Escolha: forneça 4 alternativas (a, b, c, d) com uma correta.
 5. Para Resposta Curta: peça um conceito, definição ou explicação breve.

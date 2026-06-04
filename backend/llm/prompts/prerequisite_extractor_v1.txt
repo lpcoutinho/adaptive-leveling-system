@@ -3,8 +3,10 @@ Seu objetivo é analisar o texto de uma aula de ensino superior (como Cálculo I
 
 INSTRUÇÕES DE PROCESSAMENTO:
 1. O texto abaixo foi extraído de um arquivo PDF e pode conter ruídos (quebras de linha estranhas, linguagem latex, caracteres especiais, erros de formatação). IGNORE o ruído e foque no sentido semântico das palavras legíveis.
-2. Identifique os conceitos principais da aula (máximo 5).
-3. Para cada conceito ou para a aula como um todo, identifique quais conhecimentos matemáticos ou conceituais um aluno DEVE ter ANTES de começar esta aula.
+2. Identifique os conceitos principais da aula (máximo 5). Estes são os assuntos que estão sendo ENSINADOS agora.
+3. Identifique os PRÉ-REQUISITOS: conhecimentos que o aluno DEVE dominar ANTES de começar esta aula.
+   - REGRA DE OURO: O conteúdo sendo ensinado NÃO é um pré-requisito dele mesmo.
+   - Se a aula ensina 'Derivadas', os pré-requisitos são 'Funções', 'Limites', 'Trigonometria' ou 'Álgebra', mas nunca a própria 'Derivada'.
 4. Classifique a importância de cada pré-requisito:
    - 'Critical': O aluno não entenderá NADA sem isso.
    - 'Important': O aluno terá muita dificuldade sem isso.
@@ -16,17 +18,17 @@ Você deve responder ESTRITAMENTE com um objeto JSON válido que siga esta estru
 {
   "main_concepts": [
     {
-      "name": "Nome do Conceito 1",
-      "description": "Explicação breve do conceito na aula",
+      "name": "Nome do Conceito da Aula",
+      "description": "O que está sendo ensinado nesta aula especificamente",
       "prerequisites": ["Nome do Pré-requisito A", "Nome do Pré-requisito B"]
     }
   ],
   "prerequisites": [
     {
-      "name": "Nome do Pré-requisito A",
-      "description": "Por que isso é necessário para esta aula?",
+      "name": "Nome do Pré-requisito (Fundação)",
+      "description": "Por que este conhecimento de base é necessário para entender o novo conteúdo?",
       "importance": "Critical",
-      "topics": ["Tópico 1", "Tópico 2"]
+      "topics": ["Tópico específico 1", "Tópico específico 2"]
     }
   ]
 }
@@ -35,14 +37,14 @@ REGRAS CRÍTICAS:
 - Não adicione explicações fora do JSON.
 - Não invente conceitos que não podem ser inferidos do texto.
 - Seja específico nos tópicos dos pré-requisitos (ex: em vez de 'Álgebra', use 'Fatoração de Polinômios').
+- DIFERENCIE: 'main_concepts' é o que o aluno vai aprender; 'prerequisites' é o que ele já deveria saber.
 
 AUTO-VERIFICAÇÃO (SELF-CORRECTION):
 Antes de finalizar, revise seu JSON contra estas regras:
-1. Cada pré-requisito possui importância (Critical/Important/Helpful)?
-2. Os conceitos principais têm ao menos um pré-requisito associado?
-3. As descrições são específicas e relacionadas ao texto da aula?
+1. Há algum item na lista de 'prerequisites' que seja, na verdade, o tema central da aula? Se sim, remova-o dos pré-requisitos.
+2. Cada pré-requisito possui importância (Critical/Important/Helpful)?
+3. As descrições explicam a relação de dependência entre o pré-requisito e o conteúdo novo?
 4. Nenhum campo está vazio ou com placeholders?
-Se algo violar, corrija antes de responder.
 
 TEXTO DA AULA PARA ANÁLISE:
 ---
