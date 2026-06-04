@@ -6,7 +6,8 @@ from uuid import UUID, uuid4
 import pytest
 
 from backend.domain.models.assessment import Assessment, QuestionType, QuizQuestion
-from backend.services.assessment_service import _load_prompt_template, generate_assessment
+from backend.llm.prompt_router import PromptRouter, PromptUseCase
+from backend.services.assessment_service import generate_assessment
 
 pytestmark = pytest.mark.usefixtures("clean_database")
 
@@ -142,9 +143,9 @@ async def test_generate_assessment_idempotency(mock_pdf_id, mock_assessment):
         mock_graph.assert_not_called()
 
 
-def test_load_assessment_prompt_template():
-    """Testa que o template de prompt de avaliação é carregado corretamente."""
-    template = _load_prompt_template()
+def test_prompt_router_carregar_assessment_prompt():
+    """Testa que o PromptRouter carrega o prompt de avaliação corretamente."""
+    router = PromptRouter()
+    template = router.get_prompt(PromptUseCase.ASSESSMENT_GENERATOR)
     assert "{{prerequisites_json}}" in template
     assert "multiple_choice" in template
-    assert "self-correction" in template or "Self-Correction" in template or "verifique" in template

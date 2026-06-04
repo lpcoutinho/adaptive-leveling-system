@@ -7,7 +7,8 @@ import pytest
 
 from backend.domain.models.pdf import PDFDocument
 from backend.domain.models.prerequisite import ConceptNode, KnowledgeGraph, Prerequisite
-from backend.services.prerequisite_service import _load_prompt_template, extract_prerequisites
+from backend.llm.prompt_router import PromptRouter, PromptUseCase
+from backend.services.prerequisite_service import extract_prerequisites
 
 
 @pytest.fixture
@@ -55,12 +56,11 @@ async def test_extract_prerequisites_success(mock_pdf_doc, mock_knowledge_graph)
         patch(
             "backend.services.prerequisite_service.get_pdf_by_id", new_callable=AsyncMock
         ) as mock_get_pdf,
-        patch("backend.services.prerequisite_service.LLMFactory.get_provider") as mock_llm_factory,
+        patch("backend.services.prerequisite_service.get_llm_provider") as mock_llm_factory,
         patch(
             "backend.services.prerequisite_service.save_knowledge_graph", new_callable=AsyncMock
         ) as mock_save,
     ):
-        # Setup mocks
         mock_get_graph.return_value = None
         mock_get_pdf.return_value = mock_pdf_doc
 
@@ -71,11 +71,9 @@ async def test_extract_prerequisites_success(mock_pdf_doc, mock_knowledge_graph)
 
         mock_save.return_value = mock_knowledge_graph
 
-        # Execução
         result = await extract_prerequisites(pdf_id)
 
-        # Asserts
-        assert result.pdf_id == str(pdf_id)
+        assert result.pdf_id == pdf_id
         assert len(result.main_concepts) == 1
         assert result.main_concepts[0].name == "Limites"
 
@@ -83,8 +81,9 @@ async def test_extract_prerequisites_success(mock_pdf_doc, mock_knowledge_graph)
         mock_save.assert_called_once()
 
 
-def test_load_prompt_template():
-    """Testa que o template do prompt é carregado corretamente."""
-    template = _load_prompt_template()
+def test_prompt_router_carregar_prompt():
+    """Testa que o PromptRouter carrega prompts corretamente."""
+    router = PromptRouter()
+    template = router.get_prompt(PromptUseCase.PREREQUISITE_EXTRACTOR)
     assert "{{content_text}}" in template
     assert "JSON" in template

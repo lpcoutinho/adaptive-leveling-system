@@ -1,11 +1,14 @@
-"""Testes para o serviço de geração de nivelamento."""
+"""Testes para o serviço de geração de nivelamento (leveling_service)."""
 
 from backend.domain.models.leveling import GapExplanation, LevelingPlan, StudyStep
 from backend.services.leveling_service import _build_study_order, _load_prompt_template
 
 
 class TestStudyOrder:
+    """Testes para a função _build_study_order."""
+
     def test_critical_first(self):
+        """Gaps Critical devem vir antes de Important e Helpful."""
         gaps = [
             GapExplanation(gap_name="A", importance="Important", current_score=50.0),
             GapExplanation(gap_name="B", importance="Critical", current_score=30.0),
@@ -16,6 +19,7 @@ class TestStudyOrder:
         assert names == ["B", "A", "C"]
 
     def test_lowest_score_first_same_importance(self):
+        """Entre gaps de mesma importância, menor score deve vir primeiro."""
         gaps = [
             GapExplanation(gap_name="A", importance="Critical", current_score=50.0),
             GapExplanation(gap_name="B", importance="Critical", current_score=30.0),
@@ -25,9 +29,11 @@ class TestStudyOrder:
         assert order[1].gap_name == "A"
 
     def test_empty_gaps(self):
+        """Lista vazia de gaps deve retornar ordem vazia."""
         assert _build_study_order([]) == []
 
     def test_orders_sequential(self):
+        """A ordem numérica deve ser sequencial (1, 2, 3...)."""
         gaps = [
             GapExplanation(gap_name="A", importance="Critical", current_score=40.0),
             GapExplanation(gap_name="B", importance="Important", current_score=60.0),
@@ -37,31 +43,38 @@ class TestStudyOrder:
             assert s.order == i + 1
 
     def test_completed_default_false(self):
+        """Novos StudySteps devem ter completed=False por padrão."""
         gaps = [GapExplanation(gap_name="A", importance="Critical", current_score=40.0)]
         order = _build_study_order(gaps)
         assert order[0].completed is False
 
 
 class TestPromptTemplate:
+    """Testes para o carregamento do template do prompt de nivelamento."""
+
     def test_prompt_loads(self):
+        """O template deve ser carregado com sucesso do arquivo."""
         template = _load_prompt_template()
         assert template is not None
         assert len(template) > 50
 
     def test_prompt_contains_structure_keywords(self):
+        """O prompt deve conter as palavras-chave esperadas no JSON de saída."""
         template = _load_prompt_template()
         assert "why_important" in template
         assert "explanation" in template
-        assert "calculus_example" in template
+        assert "discipline_example" in template
         assert "exercise" in template
         assert "exercise_answer" in template
 
     def test_prompt_contains_gap_placeholder(self):
+        """O prompt deve conter placeholders para dados do gap."""
         template = _load_prompt_template()
         assert "{gap_name}" in template
         assert "{importance}" in template
 
     def test_fallback_prompt_if_file_missing(self):
+        """O fallback deve conter os placeholders mínimos necessários."""
         from backend.services.leveling_service import _fallback_prompt
 
         fallback = _fallback_prompt()
@@ -70,7 +83,10 @@ class TestPromptTemplate:
 
 
 class TestLevelingPlanModel:
+    """Testes para os modelos de domínio LevelingPlan e GapExplanation."""
+
     def test_plan_creation(self):
+        """Deve ser possível criar um LevelingPlan com dados básicos."""
         from uuid import uuid4
 
         plan = LevelingPlan(
@@ -85,6 +101,7 @@ class TestLevelingPlanModel:
         assert plan.explanations[0].gap_name == "Derivadas"
 
     def test_plan_defaults(self):
+        """LevelingPlan deve ter valores padrão sensíveis."""
         from uuid import uuid4
 
         plan = LevelingPlan(readiness_id=uuid4())
@@ -95,10 +112,11 @@ class TestLevelingPlanModel:
         assert plan.study_order == []
 
     def test_gap_explanation_defaults(self):
+        """GapExplanation deve ter valores padrão vazios para campos opcionais."""
         expl = GapExplanation(gap_name="Teste")
         assert expl.why_important == ""
         assert expl.explanation == ""
-        assert expl.calculus_example == ""
+        assert expl.discipline_example == ""
         assert expl.exercise == ""
         assert expl.exercise_answer == ""
         assert expl.importance == "Helpful"
