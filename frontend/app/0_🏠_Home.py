@@ -82,7 +82,7 @@ if st.session_state.last_pdf_id:
         st.markdown("#### ⚙️ Piloto Automático (Workflow)")
         st.write("Deixe a IA orquestrar todo o percurso de forma automatizada via LangGraph.")
         if st.button("Iniciar Workflow IA", type="primary", use_container_width=True):
-            st.switch_page("pages/8_⚙️_Workflow.py")
+            st.switch_page("pages/1_⚙️_Workflow.py")
 
 st.sidebar.title("📚 Adaptive Leveling System")
 st.sidebar.info("Plataforma Adaptativa de Ensino")

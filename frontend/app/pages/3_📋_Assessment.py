@@ -90,4 +90,4 @@ else:
             st.divider()
             if st.button("🏁 Iniciar Quiz", type="primary"):
                 st.session_state["current_assessment"] = assessment
-                st.switch_page("pages/5_🏁_Quiz.py")
+                st.switch_page("pages/4_🏁_Quiz.py")

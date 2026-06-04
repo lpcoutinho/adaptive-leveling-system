@@ -17,7 +17,7 @@ st.markdown("Veja seu nível de preparação e identifique o que precisa ser rev
 if "current_assessment" not in st.session_state:
     st.warning("⚠️ Nenhuma avaliação carregada. Por favor, complete um quiz primeiro.")
     if st.button("Ir para Quiz"):
-        st.switch_page("pages/5_🏁_Quiz.py")
+        st.switch_page("pages/4_🏁_Quiz.py")
     st.stop()
 
 assessment = st.session_state["current_assessment"]
@@ -27,7 +27,7 @@ session_id = st.session_state.get("quiz_session_id")
 if not session_id:
     st.error("❌ Sessão de quiz não encontrada. Tente realizar o quiz novamente.")
     if st.button("Ir para Quiz"):
-        st.switch_page("pages/5_🏁_Quiz.py")
+        st.switch_page("pages/4_🏁_Quiz.py")
     st.stop()
 
 
@@ -142,7 +142,7 @@ if result:
             ]
             for k in keys:
                 st.session_state.pop(k, None)
-            st.switch_page("pages/5_🏁_Quiz.py")
+            st.switch_page("pages/4_🏁_Quiz.py")
 
     with c_b:
         if st.button("📊 Ver Outras Aulas", use_container_width=True):
@@ -151,4 +151,4 @@ if result:
     with c_c:
         if st.button("🚀 Iniciar Nivelamento", type="primary", use_container_width=True):
             st.session_state["current_readiness_id"] = result.get("id")
-            st.switch_page("pages/7_📚_Leveling.py")
+            st.switch_page("pages/6_📚_Leveling.py")

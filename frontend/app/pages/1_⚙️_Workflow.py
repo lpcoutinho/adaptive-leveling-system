@@ -281,13 +281,13 @@ if "current_workflow_id" in st.session_state:
                     "quiz_session", {}
                 ).get("id")
                 st.session_state["current_assessment"] = state.get("assessment")
-                st.switch_page("pages/6_🧠_Readiness.py")
+                st.switch_page("pages/5_🧠_Readiness.py")
             if c2.button("📚 Ir para Nivelamento", type="primary", use_container_width=True):
                 st.session_state["quiz_session_id"] = state.get("session_id") or state.get(
                     "quiz_session", {}
                 ).get("id")
                 st.session_state["current_readiness_id"] = state.get("readiness_id")
-                st.switch_page("pages/7_📚_Leveling.py")
+                st.switch_page("pages/6_📚_Leveling.py")
 
         elif status == "failed":
             st.error(f"❌ O processamento falhou: {status_data.get('error', 'Erro desconhecido')}")

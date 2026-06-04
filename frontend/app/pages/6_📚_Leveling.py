@@ -20,7 +20,7 @@ st.info(
 if "current_readiness_id" not in st.session_state:
     st.warning("⚠️ Diagnóstico de prontidão não encontrado. Por favor, realize a análise primeiro.")
     if st.button("Ir para Prontidão"):
-        st.switch_page("pages/6_🧠_Readiness.py")
+        st.switch_page("pages/5_🧠_Readiness.py")
     st.stop()
 
 readiness_id = st.session_state["current_readiness_id"]
@@ -144,4 +144,4 @@ if plan:
             ]
             for k in keys:
                 st.session_state.pop(k, None)
-            st.switch_page("pages/5_🏁_Quiz.py")
+            st.switch_page("pages/4_🏁_Quiz.py")
