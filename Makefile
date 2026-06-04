@@ -1,7 +1,7 @@
 # Adaptive Leveling System - Makefile
 # Facilita comandos comuns de desenvolvimento
 
-.PHONY: help install update lint format type-check test test-cov clean up down logs migrate
+.PHONY: help install update lint format type-check test test-cov clean up down logs migrate backend frontend
 
 # Variáveis
 POETRY := poetry
@@ -82,7 +82,13 @@ ps: ## Lista containers em execução
 # Banco de Dados
 migrate: ## Executa migrations no PostgreSQL
 	docker exec -i als-db psql -U postgres -d postgres < migrations/001_initial_schema.sql
-	@echo "✅ Schema criado"
+	docker exec -i als-db psql -U postgres -d postgres < migrations/002_prerequisites_schema.sql
+	@echo "✅ Schema atualizado"
+
+db-flush: ## Limpa todos os dados das tabelas (Truncate)
+	@echo "🚿 Limpando dados do banco..."
+	@docker exec -i als-db psql -U postgres -d postgres -c "TRUNCATE TABLE pdf_documents, prerequisites_graph, assessments, quiz_sessions, readiness_results, leveling_plans CASCADE;"
+	@echo "✨ Banco de dados limpo com sucesso"
 
 db-shell: ## Abre shell do PostgreSQL
 	docker exec -it als-db psql -U postgres -d postgres
@@ -99,7 +105,7 @@ backend: ## Inicia backend FastAPI
 	$(POETRY) run uvicorn backend.main:app --reload --port 8000
 
 frontend: ## Inicia frontend Streamlit
-	$(POETRY) run streamlit run frontend/app/app.py
+	$(POETRY) run streamlit run frontend/app/0_🏠_Home.py
 
 # Limpeza
 clean: ## Limpa arquivos de cache e temporários (Python, Pytest, MyPy, Ruff)
