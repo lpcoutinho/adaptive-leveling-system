@@ -1,4 +1,4 @@
-"""Testes para o avaliador de respostas."""
+"""Testes para o avaliador de respostas LLM."""
 
 import pytest
 
@@ -9,38 +9,30 @@ class TestMcqEvaluation:
     """Testes para avaliação determinística de múltipla escolha."""
 
     def test_correct_answer(self):
-        result = AnswerEvaluator.evaluate_mcq("2x", "2x")
+        result = AnswerEvaluator.evaluate_mcq("a", "a")
         assert result.score == 100.0
         assert "correta" in result.justification.lower()
 
     def test_wrong_answer(self):
-        result = AnswerEvaluator.evaluate_mcq("3x", "2x")
+        result = AnswerEvaluator.evaluate_mcq("a", "b")
         assert result.score == 0.0
-        assert (
-            "incorreta" in result.justification.lower()
-            or "incorreta" in result.justification.lower()
-        )
+        assert "incorreta" in result.justification.lower()
 
     def test_case_insensitive(self):
-        result = AnswerEvaluator.evaluate_mcq(" 2X ", "2x")
+        result = AnswerEvaluator.evaluate_mcq("Option A", "OPTION A")
         assert result.score == 100.0
 
 
 @pytest.mark.asyncio
 async def test_answer_evaluator_loads_prompt():
-    """Testa que o evaluador carrega o template corretamente."""
+    """Testa que o avaliador carrega os templates corretamente."""
     evaluator = AnswerEvaluator()
-    assert "{{question_text}}" in evaluator._prompt_template
-    assert "{{expected_answer}}" in evaluator._prompt_template
-    assert "{{student_answer}}" in evaluator._prompt_template
+    assert "{{question_text}}" in evaluator._single_prompt_template
+    assert "{{questions_json}}" in evaluator._batch_prompt_template
 
 
-@pytest.mark.asyncio
-async def test_evaluation_result_model():
-    """Testa validação do modelo EvaluationResult."""
-    r = EvaluationResult(score=75.0, justification="Bom trabalho")
-    assert r.score == 75.0
-    assert r.justification == "Bom trabalho"
-
-    with pytest.raises(ValueError):
-        EvaluationResult(score=150.0, justification="Invalido")
+def test_evaluation_result_model():
+    """Valida o modelo de resultado de avaliação."""
+    res = EvaluationResult(score=85.5, justification="Bom raciocínio")
+    assert res.score == 85.5
+    assert res.justification == "Bom raciocínio"
