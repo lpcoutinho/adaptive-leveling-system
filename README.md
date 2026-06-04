@@ -23,15 +23,16 @@ Streamlit (Frontend) → FastAPI (API Layer) → LangGraph (Workflow Orchestrati
                                                               ↓
                                                     Services (Business Logic)
                                                               ↓
-                              PostgreSQL + Valkey + S3 + LLM Providers
+                              PostgreSQL 16 + Valkey 8 + Minio (S3) + LLM Providers
 ```
 
 ### Decisões Arquiteturais
 
-- **LLM Abstraction Layer**: Interface agnóstica com suporte a Groq, OpenAI, Anthropic e Mock
-- **LangGraph**: Orquestração explícita de workflows com gerenciamento de estado
-- **Idempotência via SHA-256**: Cache de resultados para evitar reprocessamento
-- **OpenTelemetry**: Telemetria distribuída desde o primeiro dia (Jaeger)
+- **LLM Abstraction Layer**: Interface agnóstica com suporte a Groq, OpenAI, Anthropic e Mock.
+- **LangGraph**: Orquestração explícita de workflows com gerenciamento de estado e checkpointing.
+- **Idempotência via SHA-256**: Cache de resultados no DB para evitar reprocessamento e custos de API.
+- **OpenTelemetry**: Telemetria distribuída nativa (Jaeger) para monitoramento de latência e debug de agentes.
+- **Dedicated Infrastructure**: Containers reais (não simulados) para garantir paridade com produção.
 
 ## 🚀 Quick Start
 
@@ -41,7 +42,7 @@ Streamlit (Frontend) → FastAPI (API Layer) → LangGraph (Workflow Orchestrati
 - Python 3.12
 - Poetry
 
-### Setup
+### Setup e Execução
 
 ```bash
 # Clone o repositório
@@ -51,157 +52,76 @@ cd adaptive-leveling-system
 # Setup completo (infra + dependências + migrations + pre-commit)
 make setup
 
-# Ou manualmente
-poetry install
-docker-compose up -d
-make migrate
-pre-commit install
-```
+# Iniciar aplicações (em terminais separados)
+make backend
+make frontend
 
-### Desenvolvimento
-
-```bash
 # Ver saúde dos serviços
 make health
-
-# Executar testes
-make test
-
-# Lint + type-check
-make check
-
-# Iniciar backend
-make backend
-
-# Iniciar frontend
-make frontend
 ```
 
-## 📦 Serviços
+## 📦 Serviços e Portas
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| Backend (FastAPI) | 8000 | API REST |
-| Frontend (Streamlit) | 8501 | Interface web |
-| PostgreSQL | 5435 | Banco de dados |
-| Valkey | 6385 | Cache |
-| Minio S3 | 9005/9006 | Armazenamento |
-| Jaeger | 16686 | Tracing UI |
+| Backend (FastAPI) | 8000 | API REST e Documentação (/docs) |
+| Frontend (Streamlit) | 8501 | Interface do Aluno |
+| PostgreSQL | 5435 | Banco de Dados (Metadados e Inteligência) |
+| Valkey | 6385 | Cache e Sessões |
+| Minio S3 | 9005/9006 | Armazenamento de PDFs (API/Console) |
+| Jaeger | 16686 | UI de Tracing |
 
-## 🧪 Testes
-
-```bash
-# Testes unitários e integração
-make test
-
-# Testes com coverage
-make test-cov
-
-# Testes específicos
-pytest tests/test_database_connection.py -v
-pytest tests/test_llm_interface.py -v
-```
-
-**Cobertura atual**: 81%
-
-## 🔧 Configuração
-
-Crie um arquivo `.env` a partir do `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Configure as variáveis de ambiente:
-
-```bash
-# LLM Provider (groq|openai|anthropic|mock)
-LLM_PROVIDER=mock
-
-# API Keys
-GROQ_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here
-```
-
-## 📚 Documentação
-
-- [Plano de Implementação](docs/guides/IMPLEMENTACAO.md) - Roadmap completo do projeto
-- [Fase 1: Fundação](docs/guides/fase_1_fundacao.md) - Detalhes da fase atual
-- [Defesa Técnica](docs/defense/README.md) - Decisões arquiteturais e racional
-
-## 🧪 Makefile
-
-Comandos úteis para desenvolvimento:
-
-```bash
-make help           # Lista todos os comandos disponíveis
-make up             # Sobe containers
-make down           # Para containers
-make logs           # Logs dos containers
-make db-shell       # Shell PostgreSQL
-make cache-shell    # Shell Valkey
-make clean          # Limpa arquivos gerados
-make ci             # Simula pipeline CI completo
-```
-
-## 🎯 Fases de Implementação
+## 🎯 Status das Fases
 
 | Fase | Status | Descrição |
 |------|--------|-----------|
 | 1. Fundação | ✅ Completo | Infraestrutura base, LLM Abstraction, CI/CD |
-| 2. Upload PDF | ⏳ Planejado | Idempotência, S3, extração textual |
-| 3. Pré-requisitos | ⏳ Planejado | LLM structured outputs, knowledge graph |
-| 4. Avaliação | ⏳ Planejado | Geração de quiz diagnóstico |
-| 5. Quiz Estudante | ⏳ Planejado | Interface + LLM-as-a-Judge |
-| 6. Gap Detection | ⏳ Planejado | Análise de prontidão |
-| 7. Leveling | ⏳ Planejado | Conteúdo personalizado |
-| 8. LangGraph | ⏳ Planejado | Orquestração de workflow |
-| 9. Polimento | ⏳ Planejado | E2E tests, resiliência |
+| 2. Upload PDF | ✅ Completo | Idempotência (SHA-256), S3 Integration, Extração |
+| 3. Pré-requisitos| ✅ Completo | Extração estruturada (JSON) e Knowledge Graph |
+| 4. Avaliação | ✅ Completo | Geração balanceada de questões diagnósticas |
+| 5. Quiz Estudante| ✅ Completo | Interface interativa + Avaliação em lote (Batch) |
+| 6. Gap Detection | ✅ Completo | Scoring ponderado e análise de prontidão justa |
+| 7. Leveling | ✅ Completo | Conteúdo personalizado (WEEE) e plano de estudo |
+| 8. LangGraph | ✅ Completo | Orquestração end-to-end do workflow educacional |
+| 9. Polimento | 🏗️ Em Progresso | Resiliência (Circuit Breaker), Performance e Docs |
 
-## 🛡️ Qualidade
+## 🚀 Melhorias Futuras e AI Ops
 
-### CI/CD Pipeline
+Para elevar o projeto ao nível Enterprise, os seguintes pontos estão mapeados no roadmap:
 
-- **Lint**: Ruff (PEP 8, detecção de bugs)
-- **Type Check**: MyPy com plugins Pydantic
-- **Tests**: Pytest com infraestrutura real no GitHub
-- **Coverage**: Codecov integration
+### 1. Observabilidade Avançada (Langfuse/LangSmith)
 
-### Pre-commit Hooks
+- Integração com **Langfuse** para monitoramento específico de LLM (custo por aluno, versões de prompt e feedback loop de qualidade).
 
-- Formatação automática com Ruff
-- Type checking antes do commit
-- Verificação de segurança com Bandit
+### 2. Eficiência e Custos (Prompt Cache)
 
-## 📖 Stack Tecnológica
+- Implementação de **Prompt Caching** e **Semantic Caching** no Valkey para reutilizar respostas de LLM em sub-tópicos comuns entre diferentes aulas.
 
-**Backend**:
+### 3. Engenharia de IA (Hiperparâmetros)
 
-- Python 3.12 + FastAPI
-- PostgreSQL 16 + Valkey 8
-- Minio (S3-compatible)
-- OpenTelemetry + Jaeger
+- Externalização de hiperparâmetros do LLM (`temperature`, `top_p`, `max_tokens`) para o `.env`, permitindo ajustes finos por tópico sem alteração de código.
 
-**Frontend**:
+### 4. Resiliência e Escalabilidade
 
-- Streamlit
-- Python 3.12
+- **Fallback Chain**: Implementação de failover automático (ex: se Groq atingir rate limit, chaveia para OpenAI).
+- **Background Tasks**: Migração de extrações pesadas para processos em segundo plano (Celery/RabbitMQ) para evitar timeouts em PDFs gigantes.
+- **Circuit Breaker**: Bloqueio de chamadas a serviços externos instáveis para proteger a integridade do sistema.
 
-**LLM**:
+### 5. Extração Multi-modal
 
-- Groq (primary)
-- OpenAI / Anthropic (alternativos)
-- Mock (testes)
+- Evolução do extrator `pypdf` para modelos **Vision** (ex: GPT-4o) ou **Amazon Textract** para processar diagramas e fórmulas matemáticas complexas em imagens.
 
-## 🤝 Contribuindo
+## 🧪 Qualidade e Testes
 
-Este é um projeto acadêmico em desenvolvimento. Para sugestões ou questões, abra uma issue.
+```bash
+# Executar todos os testes
+make test
 
-## 📄 Licença
+# Verificar cobertura detalhada
+make test-cov
+```
 
-MIT License - Ver [LICENSE](LICENSE) para detalhes.
+**Cobertura atual**: ~81% (Foco em lógica de negócio e integração)
 
 ---
-
 **Desenvolvido como parte de avaliação técnica em Engenharia de IA.**

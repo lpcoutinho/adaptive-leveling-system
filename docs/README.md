@@ -1,42 +1,45 @@
-# Documentação
+# Documentação - Adaptive Leveling System
 
-Organização por categoria funcional:
+Este diretório contém a documentação técnica e estratégica do projeto, organizada para facilitar a auditoria e a evolução contínua por diferentes perfis (Desenvolvedores, Arquitetos e POs).
 
-## 📁 Structure
+## 📁 Estrutura de Diretórios
 
-```
+```text
 docs/
-├── defense/         # Documentação de defesa técnica por fase
-├── guides/          # Guias de implementação e execução
-├── architecture/    # Arquitetura e design técnico
-├── references/      # Documentos de referência e desafio
-└── README.md        # Este arquivo
+├── defense/         # Racional técnico e justificativas por fase (AI Ops)
+├── guides/          # Roadmaps detalhados de implementação e execução
+├── architecture/    # Visão geral, diagramas e stack tecnológica
+└── references/      # Materiais de apoio e descrição do desafio original
 ```
 
-## 📖 Conteúdo
+## 📖 Principais Documentos
 
-### defense/
+### 🏗️ Estratégia e Visão
 
-- [Defesa Técnica (Índice)](defense/README.md) - Racional e decisões técnicas organizadas por fase de implementação.
+- **[Plano Diretor (Architecture PLAN)](architecture/PLAN.md)**: A "bíblia" do projeto. Contém o design sistêmico, escolha de tecnologias e visão de longo prazo (pgvector, RAG).
+- **[Roadmap de Implementação](guides/IMPLEMENTACAO.md)**: O guia vivo de status. Mostra quais fases foram concluídas e o que está planejado para o futuro da plataforma.
 
-### guides/
+### 🛡️ Defesa Técnica (AI Engineering & Ops)
 
-- [IMPLEMENTACAO.md](guides/IMPLEMENTACAO.md) - Plano detalhado de implementação por fases
-- [fase_1_fundacao.md](guides/fase_1_fundacao.md) - Guia de execução da Fase 1 (Fundação)
-- [fase_2_upload.md](guides/fase_2_upload.md) - Guia de execução da Fase 2 (Upload e Processamento)
-- [fase_3_extracao_llm.md](guides/fase_3_extracao_llm.md) - Guia de execução da Fase 3 (Extração com LLM)
+Para entender o **porquê** das decisões (ex: por que containers reais e não simuladores? por que OpenTelemetry?), consulte o índice de defesas:
 
-### architecture/
+- **[Índice de Defesa Técnica](defense/README.md)**
 
-- [PLAN.md](architecture/PLAN.md) - Arquitetura geral do sistema, decisões técnicas e stack
+### 🚀 Guias de Execução por Fase
 
-### references/
+Detalhamento técnico "mão na massa" para replicar os resultados:
 
-- [Case_Tecnico_-_Engenheiro_de_AI_Ops.pdf](references/adaptive-leveling-system/docs/references/Case_Tecnico_-_Engenheiro_de_AI_Ops.pdf) - Aula de Cálculo I para contexto do desafio
-- [TESTE.md](references/TESTE.md) - Desafio técnico original
+1. **[Fase 1: Fundação](guides/fase_1_fundacao.md)** - Infraestrutura, LLM Layer e CI/CD.
+2. **[Fase 2: Processamento de PDF](guides/fase_2_upload.md)** - Idempotência e extração textual.
+3. **[Fase 3: Inteligência LLM](guides/fase_3_extracao_llm.md)** - Structured outputs e Grafos de Conhecimento.
 
-## 🚀 Quick Start
+## 📈 Melhorias e Evolução
 
-1. Leia `architecture/PLAN.MD` para entender a arquitetura geral
-2. Consulte `guides/IMPLEMENTACAO.md` para detalhes de implementação
-3. Use `references/` como material de apoio
+O projeto foi desenhado com extensibilidade em mente. Os próximos passos focam em **Escalabilidade** e **Eficiência de IA**:
+
+- Integração com **Langfuse** para observability de prompts.
+- Implementação de **Prompt Caching** para redução de latência.
+- Migração para **Background Tasks** em extrações longas.
+
+---
+*Para dúvidas técnicas sobre como rodar o projeto, consulte o [README.md principal](../../README.md).*
