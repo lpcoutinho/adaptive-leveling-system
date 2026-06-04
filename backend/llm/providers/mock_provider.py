@@ -1,5 +1,6 @@
 """Implementação de mock para provedor de LLM."""
 
+import contextlib
 import json
 from typing import Any, TypeVar
 
@@ -33,9 +34,7 @@ class MockProvider(ILLMProvider):
 
         # Lógica especial para avaliação de quiz se for Mock
         if "results" in response_model.model_fields and "questions_json" in prompt:
-            # Tenta extrair IDs do prompt para gerar um mock minimamente útil
             try:
-                # O prompt contém o JSON das questões
                 start = prompt.find("[")
                 end = prompt.rfind("]") + 1
                 if start != -1 and end > start:
@@ -43,23 +42,110 @@ class MockProvider(ILLMProvider):
                     mock_results = []
                     for q in questions:
                         ans = q.get("student_answer", "").strip()
-                        score = min(100.0, len(ans) * 5.0) if ans else 0.0
+                        expected = q.get("expected_answer", "").strip()
+
+                        # Determina score baseado na similaridade
+                        if not ans:
+                            score = 0.0
+                            justification = (
+                                f"Resposta em branco. A resposta correta é: {expected}. "
+                                "Para resolver, leia atentamente a questão e aplique os conceitos."
+                            )
+                        elif len(ans) < 10:
+                            score = 25.0
+                            justification = (
+                                f"Resposta muito breve. Você respondeu: '{ans}'. "
+                                f"A resposta esperada seria mais completa: {expected}. "
+                                "Tente elaborar mais incluindo a justificativa."
+                            )
+                        elif expected and expected.lower() in ans.lower():
+                            score = 100.0
+                            justification = (
+                                "Correto! Você identificou adequadamente o conceito. "
+                                f"Sua resposta '{ans}' está de acordo com o esperado."
+                            )
+                        elif len(ans) > len(expected) * 0.5:
+                            score = 75.0
+                            justification = (
+                                "Parcialmente correto. Sua resposta está no caminho certo, "
+                                f"mas poderia ser mais precisa. A resposta completa: {expected}."
+                            )
+                        else:
+                            score = 50.0
+                            justification = (
+                                f"Incorreto. Você respondeu: '{ans}'. "
+                                f"A resposta correta é: {expected}. "
+                                "Revise o conceito e tente novamente."
+                            )
+
                         mock_results.append(
                             {
                                 "question_id": q.get("question_id"),
                                 "score": score,
-                                "justification": "Avaliada pelo Mock da IA.",
+                                "justification": justification,
                             }
                         )
                     return response_model.model_validate({"results": mock_results})
             except Exception:  # nosec
                 pass
 
-        # Se não houver match, tenta criar uma instância válida com campos obrigatórios vazios
+        # Lógica especial para GapExplanation (leveling)
+        if response_model.__name__ == "GapExplanation" or (
+            hasattr(response_model, "__name__") and "GapExplanation" in str(response_model)
+        ):
+            # Extrair informações do prompt se disponível
+            gap_name = "Conceito Básico"
+            importance = "Important"
+            current_score = 50.0
+
+            # Tentar extrair valores do prompt
+            if "**Conceito**:" in prompt or "- **Conceito**:" in prompt:
+                for line in prompt.split("\n"):
+                    if "Conceito" in line and ":" in line:
+                        gap_name = line.split(":")[-1].strip().strip("*")
+                        break
+            if "Importância" in prompt and ":" in prompt:
+                for line in prompt.split("\n"):
+                    if "Importância" in line and ":" in line:
+                        importance = line.split(":")[-1].strip().strip("() ")
+                        break
+            if "Nível atual do aluno" in prompt and ":" in prompt:
+                for line in prompt.split("\n"):
+                    if "Nível atual do aluno" in line and ":" in line:
+                        with contextlib.suppress(ValueError):
+                            current_score = float(line.split(":")[-1].strip().rstrip("%"))
+                        break
+
+            return response_model.model_validate(
+                {
+                    "gap_name": gap_name,
+                    "importance": importance,
+                    "current_score": current_score,
+                    "why_important": f"{gap_name} é fundamental para entender os conceitos "
+                    f"avançados desta disciplina. Sem este conhecimento, você terá dificuldade "
+                    f"em tópicos futuros que dependem diretamente deste conceito.",
+                    "explanation": f"O conceito de {gap_name} envolve compreender como "
+                    f"aplicar técnicas e fórmulas específicas. É importante praticar "
+                    f"regularmente para consolidar o entendimento. Comece com problemas "
+                    f"simples e aumente a complexidade gradualmente.",
+                    "discipline_example": f"Na disciplina, {gap_name} é usado para resolver "
+                    f"problemas práticos. Por exemplo, ao analisar uma situação real, "
+                    f"aplicamos os conceitos de {gap_name} para encontrar soluções.",
+                    "exercise": f"Pratique {gap_name} resolvendo: Dado um problema típico, "
+                    f"identifique os elementos relevantes e aplique a fórmula ou método adequado.",
+                    "exercise_answer": (
+                        f"Para resolver este exercício: 1) Identifique os dados do problema; "
+                        f"2) Determine qual fórmula de {gap_name} se aplica; "
+                        f"3) Substitua os valores na fórmula; 4) Calcule o resultado. "
+                        f"Resposta: O resultado é obtido aplicando corretamente o método "
+                        f"de {gap_name}."
+                    ),
+                }
+            )
+
         try:
             return response_model()
         except Exception:
-            # Fallback para campos individuais
             kwargs: dict[str, object] = {}
             for name, field in response_model.model_fields.items():
                 ann = field.annotation
@@ -88,4 +174,9 @@ class MockProvider(ILLMProvider):
 
     def get_provider_name(self) -> str:
         """Retorna o nome do provider."""
+        return "mock"
+
+    @property
+    def model(self) -> str:
+        """Retorna o modelo usado."""
         return "mock"

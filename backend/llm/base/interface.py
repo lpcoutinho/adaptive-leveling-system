@@ -1,11 +1,19 @@
 """Interface para os providers de LLM."""
 
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
+
+
+class LLMUsage(BaseModel):
+    """Métricas de uso de tokens de uma chamada LLM."""
+
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
 
 
 class ILLMProvider(ABC):
@@ -47,3 +55,16 @@ class ILLMProvider(ABC):
             str: O nome do provider (ex: 'groq', 'openai').
         """
         pass
+
+    @property
+    def model(self) -> str:
+        """Nome do modelo usado para telemetria."""
+        return "unknown"
+
+    def get_trace_metadata(self) -> dict[str, Any]:
+        """Retorna metadados para rastreabilidade."""
+        return {
+            "llm.provider": self.get_provider_name(),
+            "llm.model": self.model,
+            "llm.temperature": 0.0,
+        }

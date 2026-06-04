@@ -1,11 +1,11 @@
 """Avaliador de respostas usando LLM-as-a-Judge."""
 
 import json
-import os
 
 from pydantic import BaseModel, Field
 
 from backend.llm.factory import LLMFactory
+from backend.llm.prompt_router import PromptUseCase, get_prompt_router
 
 
 class EvaluationResult(BaseModel):
@@ -32,14 +32,17 @@ class BatchEvaluationResult(BaseModel):
 class AnswerEvaluator:
     """Avalia respostas abertas (SA/Calc) usando LLM."""
 
-    def __init__(self):
-        self._single_prompt_template = self._load_prompt("answer_evaluator_v1.txt")
-        self._batch_prompt_template = self._load_prompt("answer_evaluator_batch_v1.txt")
+    def __init__(self, version: str = "v1"):
+        """Inicializa o avaliador com a versão especificada do prompt.
 
-    def _load_prompt(self, filename: str) -> str:
-        path = os.path.join(os.path.dirname(__file__), "..", "prompts", filename)
-        with open(path, encoding="utf-8") as f:
-            return f.read()
+        Args:
+            version: Versão do prompt a usar (padrão: "v1").
+        """
+        router = get_prompt_router()
+        self._single_prompt_template = router.get_prompt(PromptUseCase.ANSWER_EVALUATOR, version)
+        self._batch_prompt_template = router.get_prompt(
+            PromptUseCase.ANSWER_EVALUATOR_BATCH, version
+        )
 
     async def evaluate(
         self,

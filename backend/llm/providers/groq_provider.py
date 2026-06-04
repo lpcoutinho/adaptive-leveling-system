@@ -3,7 +3,8 @@
 from typing import TypeVar
 
 from groq import AsyncGroq
-from pydantic import BaseModel
+from loguru import logger
+from pydantic import BaseModel, ValidationError
 
 from backend.llm.base.interface import ILLMProvider
 from backend.llm.config import get_llm_settings
@@ -20,16 +21,25 @@ class GroqProvider(ILLMProvider):
 
     async def generate_structured(self, prompt: str, response_model: type[T]) -> T:
         """Gera resposta estruturada via Groq (usando tool calling ou JSON mode)."""
-        # Simplificação para Fase 1
-        completion = await self.client.chat.completions.create(
-            model=_settings.llm_primary_model,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-        )
-        content = completion.choices[0].message.content
-        if content is None:
-            raise ValueError("Groq returned empty content")
-        return response_model.model_validate_json(content)
+        try:
+            completion = await self.client.chat.completions.create(
+                model=_settings.llm_primary_model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+            )
+            content = completion.choices[0].message.content
+            if content is None:
+                raise ValueError("Groq returned empty content")
+            return response_model.model_validate_json(content)
+        except ValidationError as e:
+            logger.error(
+                f"Erro de validação Groq: {e}. "
+                f"Conteúdo retornado: {content if 'content' in locals() else 'N/A'}"
+            )
+            raise
+        except Exception as e:
+            logger.error(f"Erro ao chamar Groq: {e}")
+            raise
 
     async def generate_text(self, prompt: str) -> str:
         """Gera texto simples via Groq."""
@@ -43,3 +53,8 @@ class GroqProvider(ILLMProvider):
     def get_provider_name(self) -> str:
         """Retorna o nome do provider."""
         return "groq"
+
+    @property
+    def model(self) -> str:
+        """Retorna o modelo usado."""
+        return _settings.llm_primary_model
