@@ -26,6 +26,11 @@ A Fase 6 analisa o desempenho do aluno no quiz (Fase 5) para calcular um score d
 * **Decisão:** Pré-requisitos com score >= 80% são classificados como "Strengths" e destacados positivamente.
 * **Racional:** O feedback positivo é psicologicamente importante para engajamento. Identificar forças também permite que o sistema de nivelamento (Fase 7) personalize o conteúdo com exemplos que conectem o conhecido ao novo.
 
+### 2.5. Scoring Justo (Ignorar Não-Testados)
+
+* **Decisão:** O score final é calculado apenas sobre os pré-requisitos que foram efetivamente testados no quiz.
+* **Racional:** Penalizar o aluno por tópicos que o sistema não incluiu na avaliação gerada (por limitações de tokens ou restrição de 10 questões) geraria um "score fantasma". Nossa abordagem garante que a prontidão reflita apenas a evidência empírica coletada, aumentando a confiabilidade do diagnóstico.
+
 ## 3. Observabilidade e Testabilidade
 
 * **Tracing:** O pipeline de scoring é traceado com breakdown por importância e threshold aplicado.

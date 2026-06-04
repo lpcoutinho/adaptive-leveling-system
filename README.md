@@ -11,28 +11,27 @@ Sistema de nivelamento adaptativo powered by IA para avaliação de prontidão e
 
 O **Adaptive Leveling System** é uma plataforma que utiliza Large Language Models (LLMs) para:
 
-- Extrair pré-requisitos de aulas de Cálculo I a partir de PDFs
-- Avaliar a prontidão de estudantes através de questionários diagnósticos
-- Identificar gaps de conhecimento com análise detalhada
-- Gerar conteúdo de nivelamento personalizado para cada gap detectado
+- **Analisar** aulas em PDF e extrair pré-requisitos fundamentais.
+- **Avaliar** a prontidão de estudantes através de quizes diagnósticos gerados sob medida.
+- **Identificar** gaps de conhecimento com análise ponderada por importância.
+- **Gerar** conteúdo de nivelamento personalizado (Explicação + Exemplo + Exercício) para cada gap.
 
-## 🏗️ Arquitetura
+## 🏗️ Arquitetura e AI Ops
 
 ```
-Streamlit (Frontend) → FastAPI (API Layer) → LangGraph (Workflow Orchestration)
-                                                              ↓
-                                                    Services (Business Logic)
-                                                              ↓
-                              PostgreSQL 16 + Valkey 8 + Minio (S3) + LLM Providers
+Streamlit (Frontend) → FastAPI (API Layer)
+                                ↓
+                      Services (Business Logic) ↔ LangGraph (Orchestration)
+                                ↓
+      PostgreSQL 16 + Valkey 8 + Minio (S3) + LLM Providers (Groq/OpenAI)
 ```
 
-### Decisões Arquiteturais
+### Decisões de Engenharia
 
-- **LLM Abstraction Layer**: Interface agnóstica com suporte a Groq, OpenAI, Anthropic e Mock.
-- **LangGraph**: Orquestração explícita de workflows com gerenciamento de estado e checkpointing.
-- **Idempotência via SHA-256**: Cache de resultados no DB para evitar reprocessamento e custos de API.
-- **OpenTelemetry**: Telemetria distribuída nativa (Jaeger) para monitoramento de latência e debug de agentes.
-- **Dedicated Infrastructure**: Containers reais (não simulados) para garantir paridade com produção.
+- **LLM Abstraction Layer**: Interface agnóstica permitindo troca de modelos e testes via **MockProvider** sem custo de API.
+- **LangGraph Orchestration**: Gerenciamento de estado complexo com suporte a interrupção (Human-in-the-loop) e retomada de processos.
+- **Idempotência & Cache**: Hashing SHA-256 para PDFs e cache em Valkey para evitar reprocessamento de inteligência.
+- **Observabilidade Enterprise**: Telemetria distribuída nativa via **OpenTelemetry** e rastreamento de spans no **Jaeger**.
 
 ## 🚀 Quick Start
 
@@ -42,86 +41,79 @@ Streamlit (Frontend) → FastAPI (API Layer) → LangGraph (Workflow Orchestrati
 - Python 3.12
 - Poetry
 
-### Setup e Execução
+### Execução Rápida
 
 ```bash
-# Clone o repositório
+# Clone e Setup (infra + dependências + migrations)
 git clone https://github.com/lpcoutinho/adaptive-leveling-system.git
 cd adaptive-leveling-system
-
-# Setup completo (infra + dependências + migrations + pre-commit)
 make setup
 
-# Iniciar aplicações (em terminais separados)
+# Iniciar aplicações (Terminais separados)
 make backend
 make frontend
 
-# Ver saúde dos serviços
+# Ver saúde e telemetria
 make health
+# Jaeger UI: http://localhost:16686
 ```
 
-## 📦 Serviços e Portas
+## 🔧 Configuração e Chaves de API
+
+O sistema utiliza o arquivo `.env` para gerenciar segredos.
+
+### 🔑 Chave de Avaliação (Groq)
+
+Para facilitar a avaliação técnica via Groq, disponibilizamos uma chave temporária:
+
+```bash
+LLM_PROVIDER=groq
+GROQ_API_KEY=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
+```
+
+*Aviso: Esta chave expira em **11/06/2026**. Documentada exclusivamente para fins de avaliação.*
+
+## 📦 Serviços e Infraestrutura
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| Backend (FastAPI) | 8000 | API REST e Documentação (/docs) |
-| Frontend (Streamlit) | 8501 | Interface do Aluno |
-| PostgreSQL | 5435 | Banco de Dados (Metadados e Inteligência) |
-| Valkey | 6385 | Cache e Sessões |
-| Minio S3 | 9005/9006 | Armazenamento de PDFs (API/Console) |
-| Jaeger | 16686 | UI de Tracing |
+| Backend (FastAPI) | 8000 | API REST, Documentação (/docs) e Orquestração |
+| Frontend (Streamlit) | 8501 | Interface unificada (Home, Quiz e Diagnóstico) |
+| PostgreSQL 16 | 5435 | Persistência de metadados, inteligência e checkpoints |
+| Valkey 8 | 6385 | Cache distribuído e gerenciamento de sessões |
+| Minio S3 | 9005 | Armazenamento persistente de documentos PDF |
+| Jaeger | 16686 | Visualização de traces distribuídos (OpenTelemetry) |
 
-## 🎯 Status das Fases
+## 🎯 Status do Desenvolvimento
 
-| Fase | Status | Descrição |
-|------|--------|-----------|
-| 1. Fundação | ✅ Completo | Infraestrutura base, LLM Abstraction, CI/CD |
-| 2. Upload PDF | ✅ Completo | Idempotência (SHA-256), S3 Integration, Extração |
-| 3. Pré-requisitos| ✅ Completo | Extração estruturada (JSON) e Knowledge Graph |
-| 4. Avaliação | ✅ Completo | Geração balanceada de questões diagnósticas |
-| 5. Quiz Estudante| ✅ Completo | Interface interativa + Avaliação em lote (Batch) |
-| 6. Gap Detection | ✅ Completo | Scoring ponderado e análise de prontidão justa |
-| 7. Leveling | ✅ Completo | Conteúdo personalizado (WEEE) e plano de estudo |
-| 8. LangGraph | ✅ Completo | Orquestração end-to-end do workflow educacional |
-| 9. Polimento | 🏗️ Em Progresso | Resiliência (Circuit Breaker), Performance e Docs |
+| Fase | Status | Destaque |
+|------|--------|----------|
+| 1. Fundação | ✅ | Infraestrutura Real (Containers), CI/CD e OTel |
+| 2. Upload | ✅ | Processamento Idempotente e Extração Textual |
+| 3. Inteligência | ✅ | Extração de Pré-requisitos com Structured Output |
+| 4. Avaliação | ✅ | Geração balanceada de questões diagnósticas |
+| 5. Quiz | ✅ | Motor de correção híbrido (Determinístico + IA) |
+| 6. Prontidão | ✅ | Diagnóstico ponderado e mapeamento de forças |
+| 7. Nivelamento | ✅ | Conteúdo estruturado WEEE (Why, Explanation, Example, Exercise) |
+| 8. Orquestração | ✅ | Workflow Automático via LangGraph com Quiz embutido |
+| 9. Polimento | 🏗️ | Resiliência (Circuit Breaker) e Documentação Final |
 
-## 🚀 Melhorias Futuras e AI Ops
+## 📈 Próximos Passos (Roadmap de Escala)
 
-Para elevar o projeto ao nível Enterprise, os seguintes pontos estão mapeados no roadmap:
+- **Monitoramento de Prompt (Langfuse)**: Auditagem de qualidade, custos por token e detecção de alucinações.
+- **Painéis Operacionais (Grafana)**: Dashboards de latência p99, taxas de erro de LLM e métricas de infraestrutura.
+- **Processamento em Background (Celery)**: Migração de tarefas pesadas de IA para filas assíncronas para suportar alta concorrência.
+- **RAG & pgvector**: Evolução para busca semântica em repositórios de aulas em larga escala.
 
-### 1. Observabilidade Avançada (Langfuse/LangSmith)
-
-- Integração com **Langfuse** para monitoramento específico de LLM (custo por aluno, versões de prompt e feedback loop de qualidade).
-
-### 2. Eficiência e Custos (Prompt Cache)
-
-- Implementação de **Prompt Caching** e **Semantic Caching** no Valkey para reutilizar respostas de LLM em sub-tópicos comuns entre diferentes aulas.
-
-### 3. Engenharia de IA (Hiperparâmetros)
-
-- Externalização de hiperparâmetros do LLM (`temperature`, `top_p`, `max_tokens`) para o `.env`, permitindo ajustes finos por tópico sem alteração de código.
-
-### 4. Resiliência e Escalabilidade
-
-- **Fallback Chain**: Implementação de failover automático (ex: se Groq atingir rate limit, chaveia para OpenAI).
-- **Background Tasks**: Migração de extrações pesadas para processos em segundo plano (Celery/RabbitMQ) para evitar timeouts em PDFs gigantes.
-- **Circuit Breaker**: Bloqueio de chamadas a serviços externos instáveis para proteger a integridade do sistema.
-
-### 5. Extração Multi-modal
-
-- Evolução do extrator `pypdf` para modelos **Vision** (ex: GPT-4o) ou **Amazon Textract** para processar diagramas e fórmulas matemáticas complexas em imagens.
-
-## 🧪 Qualidade e Testes
+## 🧪 Qualidade
 
 ```bash
-# Executar todos os testes
+# Executar suíte de testes (Unitários + Integração)
 make test
 
-# Verificar cobertura detalhada
+# Verificar cobertura (Atualmente ~81%)
 make test-cov
 ```
-
-**Cobertura atual**: ~81% (Foco em lógica de negócio e integração)
 
 ---
 **Desenvolvido como parte de avaliação técnica em Engenharia de IA.**

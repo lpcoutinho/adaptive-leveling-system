@@ -26,6 +26,14 @@ A Fase 5 implementa o quiz interativo onde o aluno responde às questões gerada
 * **Decisão:** Timer configurável por questão (padrão 3min MC, 5min SA, 10min Calc) e timer total da sessão.
 * **Racional:** Impede que o aluno gaste tempo excessivo em uma única questão e simula condições controladas de avaliação. O timer é puramente informativo (não bloqueante) para reduzir ansiedade.
 
+### 2.5. Avaliação em Lote (Batch Evaluation)
+
+* **Decisão:** Agrupamento de todas as questões discursivas (SA/Calc) para uma única chamada de IA ao final do quiz.
+* **Racional:** Diferente de avaliar cada questão individualmente (que aumentaria a latência percebida e o custo de tokens devido ao envio repetitivo do sistema e instruções), a avaliação em lote:
+  1. **Reduz Custos**: Minimiza o overhead de tokens de contexto.
+  2. **Consistência Pedagógica**: Permite que o LLM avalie o aluno com uma visão holística de seu desempenho no quiz.
+  3. **Performance**: O aluno responde fluidamente e a "espera" ocorre apenas uma vez no fechamento.
+
 ## 3. Observabilidade e Testabilidade
 
 * **Tracing:** Cada resposta é traceada com tempo gasto, tipo de questão e score obtido.

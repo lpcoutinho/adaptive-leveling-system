@@ -31,6 +31,11 @@ A Fase 9 eleva o projeto ao padrão production-ready. O foco está em três pila
 * **Decisão:** Três níveis de documentação: (1) **API Docs** (OpenAPI/Swagger gerado automaticamente + manual complementar), (2) **Arquitetura** (diagramas, fluxos, decisões técnicas), (3) **Guia do Usuário** (instruções de uso orientadas a não-técnicos).
 * **Racional:** Cada stakeholder consome documentação diferente. Desenvolvedores precisam de API docs, arquitetos de diagramas, e usuários finais de guias passo-a-passo.
 
+### 2.6. Observabilidade Avançada (AI Ops)
+
+* **Decisão:** Preparação para integração com Langfuse e Grafana.
+* **Racional:** Para um sistema em produção, o tracing básico não basta. Langfuse permitirá auditar a qualidade pedagógica das respostas, enquanto o Grafana servirá como o cockpit central de saúde de toda a infraestrutura de containers.
+
 ## 3. Critérios de Aceitação
 
 | Critério | Métrica | Como Validar |

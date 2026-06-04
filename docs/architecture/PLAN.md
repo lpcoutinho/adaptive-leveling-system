@@ -138,9 +138,10 @@ Every PDF is hashed (SHA-256). If the content was previously processed, the syst
 
 ## Future Evolution (Scalability & Ops)
 
-## Advanced Observability (Langfuse)
+## Advanced Observability (Langfuse & Grafana)
 
-Detailed monitoring of LLM calls, prompt versioning, and cost tracking per session.
+* **Langfuse**: Detailed monitoring of LLM calls, prompt versioning, and cost tracking per session.
+* **Grafana**: Operational dashboards for infrastructure metrics and LLM performance tracking.
 
 ## Semantic Caching
 

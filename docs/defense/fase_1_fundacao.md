@@ -93,6 +93,16 @@ Nesta fase inicial, o objetivo primordial foi estabelecer uma **plataforma de en
 
 **Trade-off:** Gerenciamento de infraestrutura adicional, mas mitigado por container Docker stateless.
 
+### 2.6. Acesso Direto à Infraestrutura (Anti-Proxy)
+
+**Decisão:** Utilização de conexões diretas aos containers em portas dedicadas (5435, 6385, 9005) em vez de proxies locais ou túneis (como floci).
+
+**Racional:** Durante o desenvolvimento, identificamos que proxies genéricos podem causar "hangs" em conexões assíncronas (como as do `asyncpg`). Ao mapear portas exclusivas no Docker Compose, garantimos:
+
+1. **Baixa Latência**: Sem camadas intermediárias de rede.
+2. **Estabilidade**: Driver assíncrono fala direto com o socket do banco.
+3. **Isolamento**: Zero conflito com serviços rodando nas portas padrão (5432, 6379).
+
 ---
 
 ## 3. Engenharia de IA (AI Engineering)
@@ -218,6 +228,8 @@ result = await llm.generate_structured(prompt, Prerequisite)
 
 **1. Tracing Distribuído para Workflows de IA:**
 
+O sistema utiliza o padrão **OpenTelemetry**, que é agnóstico a ferramentas. Isso garante que os traces gerados hoje para o Jaeger possam ser exportados amanhã para o Grafana Tempo ou Datadog sem nenhuma alteração no código fonte.
+
 Workflows LLM são multi-stage com latências variáveis:
 
 ```
@@ -255,7 +267,15 @@ Sistema funciona mesmo sem Jaeger, apenas sem traces.
 
 **Trade-off:** Overhead de ~5-10ms por request, mas aceitável para ganho em debuggability.
 
-### 4.2. Logs Estruturados com Loguru
+### 4.2. Roadmap de Observabilidade Avançada (AI Ops)
+
+Embora o Jaeger forneça o tracing básico, o projeto está preparado para:
+
+- **Integração com Langfuse**: Para monitoramento específico de prompts, custos de tokens por aluno e detecção de alucinações.
+- **Grafana/Prometheus**: Para visualização de métricas operacionais de longo prazo (taxas de erro de LLM, latência p99 e uso de recursos dos containers).
+- **Rastreamento de API**: Utilização de spans customizados para monitorar o ciclo de vida completo de cada requisição de IA.
+
+### 4.3. Logs Estruturados com Loguru
 
 **Decisão:** Loguru em vez de logging padrão do Python.
 

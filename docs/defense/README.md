@@ -8,7 +8,8 @@ Este diretório contém a documentação de defesa técnica para o **Adaptive Le
 
 * **[Fase 1: Fundação & Infraestrutura](fase_1_fundacao.md)**
   * *Foco:* Arquitetura Local com Containers Dedicados (Postgres, Valkey, Minio).
-  * *Destaques:* Camada Agnóstica de LLM (DI), OpenTelemetry (Jaeger), CI/CD (GitHub Actions), Logs Estruturados (Loguru), Testes Automatizados (81% coverage).
+  * *Destaques:* Camada Agnóstica de LLM (DI), OpenTelemetry (Jaeger), CI/CD (GitHub Actions).
+  * *AI Ops:* Rastreamento distribuído de API, logs estruturados e roadmap para **Langfuse & Grafana**.
 
 ### 📄 Processamento de Dados
 
