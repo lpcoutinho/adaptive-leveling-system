@@ -122,5 +122,6 @@ yarn-error.log*
 # LLMs
 CLAUDE.md
 GEMINI.md
+AGENTS.md
 .claude/
 .gemini/
