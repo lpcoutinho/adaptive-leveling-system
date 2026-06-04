@@ -55,8 +55,8 @@ pdf_id = st.session_state.get("last_pdf_id")
 
 if not pdf_id:
     st.warning("⚠️ Nenhum PDF selecionado. Por favor, faça o upload de uma aula primeiro.")
-    if st.button("Ir para Upload"):
-        st.switch_page("pages/1_📄_Upload.py")
+    if st.button("Ir para Home"):
+        st.switch_page("0_🏠_Home.py")
 else:
     st.info(f"Analisando Documento ID: {pdf_id}")
 

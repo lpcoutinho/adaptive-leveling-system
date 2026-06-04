@@ -39,9 +39,9 @@ st.markdown("Gere questões personalizadas para avaliar os pré-requisitos da su
 pdf_id = st.session_state.get("last_pdf_id")
 
 if not pdf_id:
-    st.warning("Nenhuma aula selecionada. Vá para a página de upload primeiro.")
-    if st.button("Ir para Upload"):
-        st.switch_page("pages/1_📄_Upload.py")
+    st.warning("Nenhuma aula selecionada. Vá para a página inicial primeiro.")
+    if st.button("Ir para Home"):
+        st.switch_page("0_🏠_Home.py")
 else:
     st.sidebar.header("📄 Aula Atual")
     st.sidebar.info(f"ID: {str(pdf_id)[:8]}...")
