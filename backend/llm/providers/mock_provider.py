@@ -129,17 +129,18 @@ class MockProvider(ILLMProvider):
                     f"regularmente para consolidar o entendimento. Comece com problemas "
                     f"simples e aumente a complexidade gradualmente.",
                     "discipline_example": f"Na disciplina, {gap_name} é usado para resolver "
-                    f"problemas práticos. Por exemplo, ao analisar uma situação real, "
-                    f"aplicamos os conceitos de {gap_name} para encontrar soluções.",
-                    "exercise": f"Pratique {gap_name} resolvendo: Dado um problema típico, "
-                    f"identifique os elementos relevantes e aplique a fórmula ou método adequado.",
-                    "exercise_answer": (
-                        f"Para resolver este exercício: 1) Identifique os dados do problema; "
-                        f"2) Determine qual fórmula de {gap_name} se aplica; "
-                        f"3) Substitua os valores na fórmula; 4) Calcule o resultado. "
-                        f"Resposta: O resultado é obtido aplicando corretamente o método "
-                        f"de {gap_name}."
-                    ),
+                    f"problemas práticos de alta complexidade. Por exemplo, ao analisar "
+                    f"um caso real, aplicamos os fundamentos de {gap_name} para extrair "
+                    f"conclusões precisas.",
+                    "exercise": f"Resolva o seguinte problema prático de {gap_name}: "
+                    f"Dada uma situação onde {gap_name} deve ser aplicado para "
+                    f"encontrar um valor ótimo, calcule o resultado final considerando "
+                    f"os parâmetros padrão do tema.",
+                    "exercise_answer": f"Resolução do exercício de {gap_name}: "
+                    f"1) Identificamos que a variável principal segue a regra de {gap_name}. "
+                    f"2) Aplicamos a transformação necessária. "
+                    f"3) O resultado final satisfaz as condições iniciais de {gap_name}. "
+                    f"Resposta: O valor foi calculado com sucesso via princípios de {gap_name}.",
                 }
             )
 

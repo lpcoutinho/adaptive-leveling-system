@@ -107,14 +107,14 @@ async def generate_leveling_plan(
                     explanation=f"O conceito de {gap.prerequisite_name} envolve compreender "
                     f"técnicas essenciais. Revise os fundamentos e pratique com exercícios.",
                     discipline_example=f"Na disciplina, {gap.prerequisite_name} é aplicado "
-                    f"para resolver problemas práticos e análises.",
-                    exercise=f"Para praticar {gap.prerequisite_name}, resolva problemas "
-                    f"que envolvam aplicar este conceito em diferentes contextos.",
+                    f"para resolver problemas práticos e análises de casos reais.",
+                    exercise=f"Como a IA encontrou uma instabilidade temporária, "
+                    f"solicitamos que você revise um exercício base de {gap.prerequisite_name} "
+                    f"em seu material de apoio para consolidar este ponto.",
                     exercise_answer=(
-                        f"Para resolver exercícios de {gap.prerequisite_name}: "
-                        f"1) Identifique os dados do problema; 2) Determine o método; "
-                        f"3) Execute os cálculos passo a passo; 4) Verifique o resultado. "
-                        "A resposta depende dos dados específicos do problema."
+                        f"O gabarito detalhado para {gap.prerequisite_name} pode ser encontrado "
+                        f"nos anexos da aula ou consultando o tutor. Foque em entender "
+                        f"a aplicação prática do conceito."
                     ),
                 )
             )
