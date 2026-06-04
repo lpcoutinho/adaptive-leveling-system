@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
         app,
         service_name=settings.otel_service_name,
         endpoint=settings.otel_exporter_otlp_endpoint,
-        debug=settings.debug,
+        console_debug=settings.otel_console_debug,
     )
 
     app.include_router(health.router)

@@ -1,5 +1,4 @@
 async def quiz_node(state: dict) -> dict:
-
     from backend.infrastructure.repository.student_repository import save_quiz_session
     from backend.services.quiz_service import start_quiz
 

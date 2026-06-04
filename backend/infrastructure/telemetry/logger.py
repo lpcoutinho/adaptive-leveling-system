@@ -1,8 +1,17 @@
 """Configuração centralizada de logs estruturados usando Loguru."""
 
+import logging
 import sys
 
 from loguru import logger
+
+
+class InterceptHandler(logging.Handler):
+    """Redireciona logs do módulo `logging` padrão para o Loguru."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        logger_opt = logger.opt(depth=6, exception=record.exc_info)
+        logger_opt.log(record.levelno, record.getMessage())
 
 
 def setup_logger(debug: bool = False) -> None:
@@ -16,9 +25,9 @@ def setup_logger(debug: bool = False) -> None:
 
     level = "DEBUG" if debug else "INFO"
 
-    # Log estruturado no console
+    # Console (stderr junto com uvicorn)
     logger.add(
-        sys.stdout,
+        sys.stderr,
         colorize=True,
         format=(
             "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -29,15 +38,18 @@ def setup_logger(debug: bool = False) -> None:
         level=level,
     )
 
-    # Log em arquivo (opcional para produção)
+    # Arquivo (JSON serializado)
     logger.add(
         "logs/app.log",
         rotation="500 MB",
         retention="10 days",
         level="INFO",
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
-        serialize=True,  # JSON format para fácil processamento
+        serialize=True,
     )
+
+    # Intercepta logs do módulo `logging` padrão (FastAPI, uvicorn, etc.)
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
     logger.info("Logging configurado com sucesso!")
 

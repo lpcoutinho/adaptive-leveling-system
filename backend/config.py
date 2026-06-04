@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     # OpenTelemetry
     otel_exporter_otlp_endpoint: str = "http://localhost:4318"
     otel_service_name: str = "adaptive-leveling-system"
+    otel_console_debug: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False

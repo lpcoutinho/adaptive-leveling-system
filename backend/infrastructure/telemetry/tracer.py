@@ -9,7 +9,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
 
-def setup_telemetry(app: FastAPI, service_name: str, endpoint: str, debug: bool = False) -> None:
+def setup_telemetry(
+    app: FastAPI, service_name: str, endpoint: str, console_debug: bool = False
+) -> None:
     """
     Configura o OpenTelemetry para a aplicação.
 
@@ -17,13 +19,13 @@ def setup_telemetry(app: FastAPI, service_name: str, endpoint: str, debug: bool 
         app: Instância do FastAPI.
         service_name: Nome do serviço.
         endpoint: Endpoint do OTLP exporter.
-        debug: Se True, também exporta Spans para o console.
+        console_debug: Se True, também exporta Spans para o console.
     """
     resource = Resource.create({"service.name": service_name})
     provider = TracerProvider(resource=resource)
 
     # Exportar para Console apenas em modo debug (evita poluir logs)
-    if debug:
+    if console_debug:
         console_exporter = ConsoleSpanExporter()
         provider.add_span_processor(BatchSpanProcessor(console_exporter))
 

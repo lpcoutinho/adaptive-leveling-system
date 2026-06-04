@@ -4,6 +4,7 @@ import json
 import os
 from uuid import UUID
 
+from loguru import logger
 from pydantic import BaseModel
 
 from backend.domain.models.assessment import Assessment, QuizQuestion
@@ -44,12 +45,15 @@ async def generate_assessment(pdf_id: UUID) -> Assessment:
     Raises:
         ValueError: Se o PDF não tiver pré-requisitos extraídos.
     """
+    logger.info(f"Iniciando geração de avaliação para PDF {pdf_id}...")
     existing = await get_assessment_by_pdf_id(pdf_id)
     if existing and existing.questions:
+        logger.info(f"Avaliação existente encontrada para PDF {pdf_id}. Reutilizando...")
         return existing
 
     graph = await get_knowledge_graph_by_pdf_id(pdf_id)
     if not graph or not graph.prerequisites:
+        logger.error(f"Nenhum pré-requisito encontrado para o PDF {pdf_id}.")
         raise ValueError(
             f"Nenhum pré-requisito encontrado para o PDF {pdf_id}. "
             "Execute a extração de pré-requisitos primeiro."
@@ -69,4 +73,5 @@ async def generate_assessment(pdf_id: UUID) -> Assessment:
         questions=result.questions,
     )
     saved = await save_assessment(assessment)
+    logger.success(f"Avaliação gerada com sucesso para o PDF {pdf_id}.")
     return saved

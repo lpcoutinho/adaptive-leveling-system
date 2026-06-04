@@ -2,6 +2,8 @@
 
 from uuid import UUID
 
+from loguru import logger
+
 from backend.domain.models.leveling import GapExplanation, LevelingPlan, StudyStep
 from backend.infrastructure.repository.leveling_repository import (
     get_plan_by_readiness,
@@ -52,14 +54,26 @@ async def generate_leveling_plan(
     readiness_id: UUID,
     llm: ILLMProvider,
 ) -> LevelingPlan:
+    logger.info(
+        f"Iniciando geração de plano de nivelamento para sessão {session_id}, "
+        f"readiness {readiness_id}..."
+    )
     existing = await get_plan_by_readiness(readiness_id)
     if existing:
+        logger.info(
+            f"Plano de nivelamento existente encontrado para readiness {readiness_id}. "
+            "Reutilizando..."
+        )
         return existing
 
     result = await get_readiness_by_id(readiness_id)
     if not result:
         result = await get_readiness_by_session(session_id)
     if not result:
+        logger.error(
+            f"Resultado de prontidão não encontrado para sessão {session_id}, "
+            f"readiness {readiness_id}."
+        )
         raise ValueError("Resultado de prontidão não encontrado.")
 
     gaps = result.gaps
@@ -101,4 +115,5 @@ async def generate_leveling_plan(
         study_order=study_order,
         total_gaps=len(explanations),
     )
+    logger.success(f"Plano de nivelamento gerado com sucesso para readiness {readiness_id}.")
     return await save_leveling_plan(plan)
