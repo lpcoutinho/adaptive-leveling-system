@@ -27,46 +27,56 @@ def mock_knowledge_graph():
 
 
 @pytest.fixture
+def mock_mapping():
+    return {
+        "q1": "Derivadas",
+        "q2": "Derivadas",
+        "q3": "Limites",
+        "q4": "Frações",
+    }
+
+
+@pytest.fixture
 def mock_answers():
     from backend.domain.models.quiz import QuizAnswer
 
     return [
         QuizAnswer(
-            question_id="Derivadas", question_type="multiple_choice", student_answer="a", score=50.0
+            question_id="q1", question_type="multiple_choice", student_answer="a", score=50.0
         ),
         QuizAnswer(
-            question_id="Derivadas", question_type="multiple_choice", student_answer="a", score=60.0
+            question_id="q2", question_type="multiple_choice", student_answer="a", score=60.0
         ),
         QuizAnswer(
-            question_id="Limites", question_type="multiple_choice", student_answer="a", score=75.0
+            question_id="q3", question_type="multiple_choice", student_answer="a", score=75.0
         ),
         QuizAnswer(
-            question_id="Frações", question_type="multiple_choice", student_answer="a", score=95.0
+            question_id="q4", question_type="multiple_choice", student_answer="a", score=95.0
         ),
     ]
 
 
 class TestWeightedScoring:
     def test_critical_weight_3x(self):
-        data = {"Derivadas": {"score": 100.0, "importance": "Critical"}}
+        data = {"Derivadas": {"score": 100.0, "importance": "Critical", "evaluated": True}}
         score = _weighted_overall_score(data)
         assert score == 100.0
 
     def test_important_weight_2x(self):
-        data = {"Limites": {"score": 100.0, "importance": "Important"}}
+        data = {"Limites": {"score": 100.0, "importance": "Important", "evaluated": True}}
         score = _weighted_overall_score(data)
         assert score == 100.0
 
     def test_helpful_weight_1x(self):
-        data = {"Frações": {"score": 100.0, "importance": "Helpful"}}
+        data = {"Frações": {"score": 100.0, "importance": "Helpful", "evaluated": True}}
         score = _weighted_overall_score(data)
         assert score == 100.0
 
     def test_mixed_weights(self):
         data = {
-            "Derivadas": {"score": 100.0, "importance": "Critical"},
-            "Limites": {"score": 0.0, "importance": "Important"},
-            "Frações": {"score": 100.0, "importance": "Helpful"},
+            "Derivadas": {"score": 100.0, "importance": "Critical", "evaluated": True},
+            "Limites": {"score": 0.0, "importance": "Important", "evaluated": True},
+            "Frações": {"score": 100.0, "importance": "Helpful", "evaluated": True},
         }
         score = _weighted_overall_score(data)
         expected = round((100 * 3 + 0 * 2 + 100 * 1) / (3 + 2 + 1), 2)
@@ -77,8 +87,8 @@ class TestWeightedScoring:
 
     def test_all_zeros(self):
         data = {
-            "Derivadas": {"score": 0.0, "importance": "Critical"},
-            "Limites": {"score": 0.0, "importance": "Important"},
+            "Derivadas": {"score": 0.0, "importance": "Critical", "evaluated": True},
+            "Limites": {"score": 0.0, "importance": "Important", "evaluated": True},
         }
         assert _weighted_overall_score(data) == 0.0
 
@@ -105,40 +115,40 @@ class TestClassifier:
 
 class TestGapIdentification:
     def test_identify_gaps_below_60(self):
-        data = {"Derivadas": {"score": 45.0, "importance": "Critical"}}
+        data = {"Derivadas": {"score": 45.0, "importance": "Critical", "evaluated": True}}
         gaps, strengths = _identify_gaps_and_strengths(data)
         assert len(gaps) == 1
         assert gaps[0].is_gap is True
         assert gaps[0].is_strength is False
 
     def test_identify_strength_above_80(self):
-        data = {"Derivadas": {"score": 90.0, "importance": "Critical"}}
+        data = {"Derivadas": {"score": 90.0, "importance": "Critical", "evaluated": True}}
         gaps, strengths = _identify_gaps_and_strengths(data)
         assert len(strengths) == 1
         assert strengths[0].is_strength is True
         assert len(gaps) == 0
 
     def test_neutral_zone_both_false(self):
-        data = {"Derivadas": {"score": 70.0, "importance": "Important"}}
+        data = {"Derivadas": {"score": 70.0, "importance": "Important", "evaluated": True}}
         gaps, strengths = _identify_gaps_and_strengths(data)
         assert len(gaps) == 0
         assert len(strengths) == 0
 
     def test_exact_gap_threshold(self):
-        data = {"Derivadas": {"score": 59.99, "importance": "Critical"}}
+        data = {"Derivadas": {"score": 59.99, "importance": "Critical", "evaluated": True}}
         gaps, _ = _identify_gaps_and_strengths(data)
         assert len(gaps) == 1
 
     def test_exact_strength_threshold(self):
-        data = {"Derivadas": {"score": 80.0, "importance": "Important"}}
+        data = {"Derivadas": {"score": 80.0, "importance": "Important", "evaluated": True}}
         _, strengths = _identify_gaps_and_strengths(data)
         assert len(strengths) == 1
 
     def test_multiple_gaps_and_strengths(self):
         data = {
-            "A": {"score": 30.0, "importance": "Critical"},
-            "B": {"score": 90.0, "importance": "Important"},
-            "C": {"score": 70.0, "importance": "Helpful"},
+            "A": {"score": 30.0, "importance": "Critical", "evaluated": True},
+            "B": {"score": 90.0, "importance": "Important", "evaluated": True},
+            "C": {"score": 70.0, "importance": "Helpful", "evaluated": True},
         }
         gaps, strengths = _identify_gaps_and_strengths(data)
         assert len(gaps) == 1
@@ -146,8 +156,8 @@ class TestGapIdentification:
 
     def test_all_gaps(self):
         data = {
-            "A": {"score": 10.0, "importance": "Critical"},
-            "B": {"score": 20.0, "importance": "Important"},
+            "A": {"score": 10.0, "importance": "Critical", "evaluated": True},
+            "B": {"score": 20.0, "importance": "Important", "evaluated": True},
         }
         gaps, strengths = _identify_gaps_and_strengths(data)
         assert len(gaps) == 2
@@ -180,14 +190,18 @@ class TestGapPrioritization:
 
 
 class TestPerPrerequisite:
-    def test_calculate_average(self, mock_knowledge_graph, mock_answers):
-        scores = _calculate_per_prerequisite_scores(mock_answers, mock_knowledge_graph)
+    def test_calculate_average(self, mock_knowledge_graph, mock_answers, mock_mapping):
+        scores = _calculate_per_prerequisite_scores(
+            mock_answers, mock_knowledge_graph, mock_mapping
+        )
         assert scores["Derivadas"]["score"] == 55.0
         assert scores["Limites"]["score"] == 75.0
         assert scores["Frações"]["score"] == 95.0
 
-    def test_importance_preserved(self, mock_knowledge_graph, mock_answers):
-        scores = _calculate_per_prerequisite_scores(mock_answers, mock_knowledge_graph)
+    def test_importance_preserved(self, mock_knowledge_graph, mock_answers, mock_mapping):
+        scores = _calculate_per_prerequisite_scores(
+            mock_answers, mock_knowledge_graph, mock_mapping
+        )
         assert scores["Derivadas"]["importance"] == "Critical"
         assert scores["Limites"]["importance"] == "Important"
         assert scores["Frações"]["importance"] == "Helpful"

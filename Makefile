@@ -81,8 +81,11 @@ ps: ## Lista containers em execução
 
 # Banco de Dados
 migrate: ## Executa migrations no PostgreSQL
-	docker exec -i als-db psql -U postgres -d postgres < migrations/001_initial_schema.sql
-	docker exec -i als-db psql -U postgres -d postgres < migrations/002_prerequisites_schema.sql
+	@echo "🗄️ Executando migrações..."
+	@for file in migrations/*.sql; do \
+		echo "Aplicando $$file..."; \
+		docker exec -i als-db psql -U postgres -d postgres < $$file; \
+	done
 	@echo "✅ Schema atualizado"
 
 db-flush: ## Limpa todos os dados das tabelas (Truncate)
