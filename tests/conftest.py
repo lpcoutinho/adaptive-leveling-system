@@ -19,7 +19,10 @@ async def clean_database():
     """Limpa as tabelas do banco de dados antes de cada teste."""
     from backend.infrastructure.database import execute_query
 
-    await execute_query("TRUNCATE TABLE pdf_documents CASCADE")
+    await execute_query(
+        "TRUNCATE TABLE pdf_documents, prerequisites_graph, assessments, "
+        "quiz_sessions, readiness_results, leveling_plans, workflow_executions CASCADE"
+    )
     yield
 
 

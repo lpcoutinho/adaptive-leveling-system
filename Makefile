@@ -82,7 +82,7 @@ ps: ## Lista containers em execução
 # Banco de Dados
 migrate: ## Executa migrations no PostgreSQL
 	@echo "🗄️ Executando migrações..."
-	@for file in migrations/*.sql; do \
+	@set -e; for file in migrations/*.sql; do \
 		echo "Aplicando $$file..."; \
 		docker exec -i als-db psql -U postgres -d postgres < $$file; \
 	done

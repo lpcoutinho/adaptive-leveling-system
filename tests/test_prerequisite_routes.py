@@ -66,8 +66,10 @@ async def test_get_prerequisites_after_extraction(sample_pdf_path):
             files = {"file": ("calc.pdf", f, "application/pdf")}
             up_res = await ac.post("/api/v1/pdf/upload", files=files)
 
-        pdf_id = up_res.json()["id"]
-
+        assert up_res.status_code == 201, f"Upload falhou: {up_res.text}"
+        data = up_res.json()
+        assert "id" in data, f"Resposta de upload incompleta: {data}"
+        pdf_id = data["id"]
         # Extração
         ext_res = await ac.post(f"/api/v1/prerequisites/extract/{pdf_id}")
         assert ext_res.status_code == 201

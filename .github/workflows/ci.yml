@@ -64,9 +64,7 @@ jobs:
         run: poetry install
 
       - name: Run Database Migrations
-        run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-          PGPASSWORD=postgres psql -h 127.0.0.1 -p 5435 -U postgres -d postgres -f migrations/001_initial_schema.sql
+        run: make migrate
 
       - name: Run Tests with Coverage
         env:

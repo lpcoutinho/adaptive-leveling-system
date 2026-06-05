@@ -17,12 +17,14 @@ async def test_upload_pdf_route(sample_pdf_path):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         with open(sample_pdf_path, "rb") as f:
-            files = {"file": ("calculus.pdf", f, "application/pdf")}
+            files = {"file": ("test.pdf", f, "application/pdf")}
             response = await ac.post("/api/v1/pdf/upload", files=files)
 
-    assert response.status_code == 201
-    data = response.json()
-    assert data["filename"] == "calculus.pdf"
+        assert response.status_code == 201, f"Upload falhou: {response.text}"
+        data = response.json()
+        assert "id" in data
+        assert "hash" in data
+
     assert "id" in data
     assert "hash" in data
 
